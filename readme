@@ -1,0 +1,64 @@
+//like java get & set
+use constructor::{Get, Set};
+
+#[derive(Set, Get, Default, Debug)]
+pub struct Foo {
+    a: i32,
+    b: String,
+    c: bool,
+}
+
+#[test]
+fn test_foo() {
+    let x = Foo::default().set_a(112).set_b("bb".to_string());
+    println!("{:?}", x);
+    println!("{:?}", x.get_a());
+    println!("{:?}", x.get_b());
+    println!("{:?}", x.get_c());
+}
+
+
+#[derive(Set, Get, Default, Debug)]
+#[set(a, c)]
+#[get(b, d)]
+pub struct Bar {
+    a: i32,
+    b: String,
+    c: bool,
+    d: f32,
+}
+
+#[test]
+fn test_bar() {
+    let x = Bar::default().set_a(123);
+    println!("{:?}", x);
+    println!("{:?}", x.get_b());
+    println!("{:?}", x.get_d());
+}
+
+#[derive(Set, Get, Default, Debug)]
+pub struct UnFoo(u32, String, bool);
+
+#[test]
+fn test_un_foo() {
+    let x = UnFoo::default().set_0(112u32).set_1("bb".to_string());
+    println!("{:?}", x);
+    println!("{:?}", x.get_0());
+    println!("{:?}", x.get_1());
+    println!("{:?}", x.get_2());
+}
+
+
+#[derive(Set, Get, Default, Debug)]
+#[set(0, 2)]
+#[get(1, 2, 3)]
+pub struct UnBar(u32, String, bool, i32);
+
+#[test]
+fn test_un_bar() {
+    let x = UnBar::default().set_0(123u32).set_2(true);
+    println!("{:?}", x);
+    println!("{:?}", x.get_1());
+    println!("{:?}", x.get_2());
+    println!("{:?}", x.get_3());
+}
