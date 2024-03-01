@@ -1,4 +1,6 @@
 //like java get & set
+//未指定struct字段：全部字段构建get/set
+//指定struct字段时：指定字段构建get/set
 use constructor::{Get, Set};
 
 #[derive(Set, Get, Default, Debug)]
