@@ -1,42 +1,36 @@
 pub fn to_snake_case(s: &str) -> String {
     let mut res = String::new();
+    let mut pre_under_line = false;
+
     for c in s.chars() {
         if c.is_ascii_uppercase() {
-            res.push('_');
+            if !pre_under_line {
+                res.push('_');
+            }
             res.push(c.to_ascii_lowercase());
         } else {
+            if c.eq(&'_') {
+                pre_under_line = true;
+            } else {
+                pre_under_line = false;
+            }
             res.push(c)
         }
     }
-    let mut pre_under_line = false;
-    let mut result = String::new();
-    for c in res.chars() {
-        if c.eq(&'_') {
-            if pre_under_line {
-                continue;
-            }
-            pre_under_line = true;
-        }else {
-            pre_under_line = false;
-        }
-        result.push(c);
-
+    if res.starts_with('_') {
+        res = res.split_off(1);
     }
-    if result.starts_with('_') {
-        result = result.split_off(1);
-    }
-    result
+    res
 }
+
 #[test]
-fn test(){
-    let a = "_abcde";
-    let b = "_Abcde";
-    let c = "_A_BcDe";
-    let d = "A_Bcde";
-    let e = "AbCde";
-    println!("{}",to_snake_case(a));
-    println!("{}",to_snake_case(b));
-    println!("{}",to_snake_case(c));
-    println!("{}",to_snake_case(d));
-    println!("{}",to_snake_case(e));
+fn test() {
+    assert_eq!(to_snake_case("_abcde"), String::from("abcde"));
+    assert_eq!(to_snake_case("_Abcde"), String::from("abcde"));
+    assert_eq!(to_snake_case("_A_BcDe"), String::from("a_bc_de"));
+    assert_eq!(to_snake_case("A_Bcde"), String::from("a_bcde"));
+    assert_eq!(to_snake_case("A_bCde"), String::from("a_b_cde"));
+    assert_eq!(to_snake_case("AbCde"), String::from("ab_cde"));
+    assert_eq!(to_snake_case("A1bCde"), String::from("a1b_cde"));
+    assert_eq!(to_snake_case("Ab2Cde"), String::from("ab2_cde"));
 }
