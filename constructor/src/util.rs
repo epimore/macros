@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub fn to_snake_case(s: &str) -> String {
     let mut res = String::new();
     let mut pre_under_line = false;
