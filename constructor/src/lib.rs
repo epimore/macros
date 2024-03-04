@@ -1,5 +1,3 @@
-mod util;
-
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
@@ -233,9 +231,8 @@ fn build_named_get_constructor(field_name: &Ident, field_type: &Type, constructo
 fn build_unnamed_set_constructor(index: &Index, field_type: &Type, constructor_name: Ident) -> proc_macro2::TokenStream {
     let param_name = format_ident!("field_{}",index);
     let constructor = quote! {
-            pub fn #constructor_name(mut self,#param_name:impl Into<#field_type>) ->Self{
+            pub fn #constructor_name(&mut self,#param_name:impl Into<#field_type>) {
                 self.#index = #param_name.into();
-                self
             }
         };
     constructor
@@ -243,9 +240,8 @@ fn build_unnamed_set_constructor(index: &Index, field_type: &Type, constructor_n
 
 fn build_named_set_constructor(field_name: &Ident, field_type: &Type, constructor_name: Ident) -> proc_macro2::TokenStream {
     let constructor = quote! {
-            pub fn #constructor_name(mut self,#field_name:impl Into<#field_type>) -> Self{
+            pub fn #constructor_name(&mut self,#field_name:impl Into<#field_type>) {
                 self.#field_name = #field_name.into();
-                self
             }
         };
     constructor

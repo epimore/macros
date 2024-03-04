@@ -1,3 +1,6 @@
+//like java get & set & new
+//未指定struct字段：全部字段构建get/set/new
+//指定struct字段时：指定字段构建get/set/new(其他字段Default::default())
 use constructor::{Get, Set, New};
 
 #[derive(Set, Get, New, Default, Debug, PartialEq)]
@@ -75,6 +78,10 @@ fn test_un_bar() {
     assert_eq!(un_bar.get_0(), &111u32);
     assert_eq!(un_bar.get_2(), &false);
 }
+
+
+
+
 
 
 
