@@ -1,0 +1,5 @@
+指定实体生成sql语句执行方法
+select()_by(a,b,c)
+insert(a,b,c)
+update(a,b,c)by(d)
+delete_by(a,b)
