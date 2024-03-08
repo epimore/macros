@@ -107,6 +107,7 @@ fn build_constructor(ast: &DeriveInput, fields: &Punctuated<Field, Token![,]>, c
     let name = &ast.ident;
     let (i, t, w) = ast.generics.split_for_impl();
     quote! {
+        #[automatically_derived]
         impl #i #name #t #w {
             #constructors
         }

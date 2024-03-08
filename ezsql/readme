@@ -1,5 +1,5 @@
 指定实体生成sql语句执行方法
 select()_by(a,b,c)
-insert(a,b,c)
-update(a,b,c)by(d)
+insert(a,b,c) 单条插入，批量插入
+update(a,b,c) 单条插入，批量插入更新(ON DUPLICATE KEY UPDATE)
 delete_by(a,b)

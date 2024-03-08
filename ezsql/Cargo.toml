@@ -9,8 +9,9 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
-syn = {version = "2"}
+syn = { version = "2" }
 quote = "1.0"
 proc-macro2 = "1.0"
 tools = { path = "../tools" }
-constructor = {path = "../constructor"}
+constructor = { path = "../constructor" }
+pig = { path = "../../pig",features = ["db-mysql"] }
