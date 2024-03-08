@@ -51,7 +51,7 @@ fn build_constructor(attr: TokenStream, item: TokenStream) -> proc_macro2::Token
                 build_create_constructor(inner, ext, state.get_table_name(), &struct_table_field_map)
             }
             SqlType::READ => { panic!() }
-            SqlType::UPDATE => { panic!() }
+            SqlType::UPDATE => { build_update_constructor(inner, ext, state.get_table_name(), &struct_table_field_map) }
             SqlType::DELETE => { buidl_delete_constructor(inner, struct_info.get_field_infos(), state.get_table_name(), &struct_table_field_map) }
         };
         constructors = quote! {
@@ -64,6 +64,54 @@ fn build_constructor(attr: TokenStream, item: TokenStream) -> proc_macro2::Token
         #input
         impl #impl_generics #struct_name #ty_generics #where_clause {
              #constructors
+        }
+    }
+}
+
+fn build_update_constructor(inner: &Inner, sql_type_ext: &SqlTypeExt, table_name: &String, struct_table_field_map: &HashMap<String, String>) -> proc_macro2::TokenStream {
+    let mut sql = String::from("INSERT INTO ");
+    sql.push_str(table_name);
+    sql.push_str(" (");
+    let (table_field_name, struct_field_name, update_fields_create_str, struct_field_name_vec) = build_create_update_fields_str(&struct_table_field_map, inner.get_fields());
+    sql.push_str(&*table_field_name);
+    sql.push_str(") VALUES (");
+    sql.push_str(&*struct_field_name);
+    sql.push(')');
+    if let Some(true) = inner.get_create() {
+        sql.push_str(" ON DUPLICATE KEY UPDATE ");
+        sql.push_str(&*update_fields_create_str);
+    }
+    let fn_name = inner.get_fn_name();
+    let fn_name_ident = format_ident!("{fn_name}");
+    let field_value_ident = struct_field_name_vec
+        .iter()
+        .map(|name| format_ident!("get_{}",name)).collect::<Vec<Ident>>();
+    match *sql_type_ext {
+        SqlTypeExt::SINGLE => {
+            quote!(
+                pub fn #fn_name_ident(&self, conn: &mut pig::mysql::PooledConn) {
+                    use pig::mysql::prelude::Queryable;
+                    use pig::mysql::params;
+                    use pig::err::TransError;
+                    use pig::logger::error;
+                    let _ = conn.exec_drop(#sql,params!{
+                        #(#struct_field_name_vec => &self.#field_value_ident()),*
+                    }).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                }
+            )
+        }
+        SqlTypeExt::BATCH => {
+            quote!(
+                pub fn #fn_name_ident(vec:Vec<Self>, conn: &mut pig::mysql::PooledConn) {
+                    use pig::mysql::prelude::Queryable;
+                    use pig::mysql::params;
+                    use pig::err::TransError;
+                    use pig::logger::error;
+                    let _ = conn.exec_batch(#sql,vec.iter().map(|p|params!{
+                       #(#struct_field_name_vec => &p.#field_value_ident()),*
+                    })).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                }
+            )
         }
     }
 }
@@ -120,7 +168,7 @@ fn build_create_constructor(inner: &Inner, sql_type_ext: &SqlTypeExt, table_name
     let mut sql = String::from("INSERT INTO ");
     sql.push_str(table_name);
     sql.push_str(" (");
-    let (table_field_name, struct_field_name, struct_field_name_vec) = build_create_update_fields_str(&struct_table_field_map, inner.get_fields());
+    let (table_field_name, struct_field_name, _update_fields_create_str, struct_field_name_vec) = build_create_update_fields_str(&struct_table_field_map, inner.get_fields());
     sql.push_str(&*table_field_name);
     sql.push_str(") VALUES (");
     sql.push_str(&*struct_field_name);
@@ -160,49 +208,45 @@ fn build_create_constructor(inner: &Inner, sql_type_ext: &SqlTypeExt, table_name
     }
 }
 
-/*fn build_table_condition_fields_string(res_field_map: HashMap<String, String>, condition: HashMap<String, Condition>) -> String {
-    let mut sql_fields_str: String = String::new();
-    for (index, (k, v)) in condition.iter().enumerate() {
-        if index > 0 {
-            sql_fields_str.push(',');
-        }
-    }
-}*/
-
 /// res_field_map -> struct_field_name:table_field_name
 /// fields -> 指定field
 /// 未指定field时，全部字段
-/// 返回sql字段，:struct_field_name,struct_field_name_vec
-fn build_create_update_fields_str(struct_table_field_map: &HashMap<String, String>, fields: &Option<Vec<String>>) -> (String, String, Vec<String>) {
+/// table_fields_str,struct_fields_str,update_fields_create_str,struct_fields_vec
+fn build_create_update_fields_str(struct_table_field_map: &HashMap<String, String>, fields: &Option<Vec<String>>) -> (String, String, String, Vec<String>) {
     let mut table_fields_str = String::new();
-    let mut struct_field_str = String::new();
-    let mut struct_field_vec = Vec::new();
+    let mut struct_fields_str = String::new();
+    let mut update_fields_create_str = String::new();
+    let mut struct_fields_vec = Vec::new();
     match fields {
         None => {
             for (inedx, (key, val)) in struct_table_field_map.iter().enumerate() {
                 if inedx > 0 {
                     table_fields_str.push(',');
-                    struct_field_str.push(',');
+                    struct_fields_str.push(',');
+                    update_fields_create_str.push(',');
                 }
                 table_fields_str.push_str(&*val);
-                struct_field_str.push_str(&*format!(":{}", key));
-                struct_field_vec.push(key.clone());
+                update_fields_create_str.push_str(&*format!("{}=VALUES({})", &val, &val));
+                struct_fields_str.push_str(&*format!(":{}", key));
+                struct_fields_vec.push(key.clone());
             }
         }
         Some(vec) => {
             for (index, key) in vec.iter().enumerate() {
                 if index > 0 {
                     table_fields_str.push(',');
-                    struct_field_str.push(',');
+                    struct_fields_str.push(',');
+                    update_fields_create_str.push(',');
                 }
                 let table_field = struct_table_field_map.get(key).expect(&*format!("{} invalid fields", key));
                 table_fields_str.push_str(&*table_field);
-                struct_field_str.push_str(&*format!(":{}", key));
+                update_fields_create_str.push_str(&*format!("{}=VALUES({})", &table_field, &table_field));
+                struct_fields_str.push_str(&*format!(":{}", key));
             }
-            struct_field_vec = vec.clone();
+            struct_fields_vec = vec.clone();
         }
     }
-    (table_fields_str, struct_field_str, struct_field_vec)
+    (table_fields_str, struct_fields_str, update_fields_create_str, struct_fields_vec)
 }
 
 //全量struct字段映射table字段：field_name_to_snake = true -> 全局结构体字段除alias_fields不受影响，其他转为sanke结构；

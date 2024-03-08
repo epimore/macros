@@ -11,6 +11,9 @@ pub const LT: &str = "<";
 pub const GT: &str = ">";
 pub const EQ_LT: &str = "<=";
 pub const EQ_GT: &str = ">=";
+pub const NEQ: &str = "!=";
+pub const IN: &str = "IN";
+pub const NOT_IN: &str = "NOT IN";
 
 pub enum Condition {
     EQ,
@@ -18,6 +21,9 @@ pub enum Condition {
     GT,
     EqLt,
     EqGt,
+    NEQ,
+    IN,
+    NOT_IN,
 }
 
 impl Condition {
@@ -28,7 +34,10 @@ impl Condition {
             GT => Condition::GT,
             EQ_LT | "=<" => Condition::EqLt,
             EQ_GT | "=>" => Condition::EqGt,
-            &_ => { panic!("invalid Condition;should be one of [>,=,<,>=,=>,<=,=<]") }
+            NEQ | "=>" => Condition::NEQ,
+            IN | "=>" => Condition::IN,
+            NOT_IN | "=>" => Condition::NOT_IN,
+            &_ => { panic!("invalid Condition;should be one of [>,=,<,>=,=>,<=,=<,!=,IN,ONT_IN]") }
         }
     }
 
@@ -39,6 +48,9 @@ impl Condition {
             Condition::GT => GT,
             Condition::EqLt => EQ_LT,
             Condition::EqGt => EQ_GT,
+            Condition::NEQ => NEQ,
+            Condition::IN => IN,
+            Condition::NOT_IN => NOT_IN,
         }
     }
 }
@@ -143,6 +155,14 @@ pub fn to_snake_case(s: &str) -> String {
         res = res.split_off(1);
     }
     res
+}
+
+pub enum Private {
+    CREATE,
+    READ(),
+    UPDATE,
+    DELETE,
+
 }
 
 #[test]

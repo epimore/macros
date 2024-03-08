@@ -172,11 +172,14 @@ pub struct Inner {
     fields: Option<Vec<String>>,
     //条件字段，NONE=不控制
     condition: Option<HashMap<String, Condition>>,
-    //分页(page_num,page_size)
+    //用于read分页(page_num,page_size)
     page: Option<(u32, u32)>,
+    //用于read排序
     order: Option<HashMap<String, Order>>,
-    //未指定时，返回struct；可以是基本数据类型及元组;eg:(u32,String,bool)
+    //用于read返回值未指定时，返回struct；可以是基本数据类型及元组;eg:(u32,String,bool)
     res_type: Option<String>,
+    //用于update时：不存在则新增；默认None及false为不新增
+    create: Option<bool>,
 }
 
 impl Debug for Inner {
@@ -231,6 +234,13 @@ impl Debug for Inner {
                 write!(f, "Some({})", val)?;
             }
         }
+        write!(f, ", create: ")?;
+        match &self.create {
+            None => { write!(f, "None")? }
+            Some(val) => {
+                write!(f, "Some({})", val)?;
+            }
+        }
         write!(f, "}}")
     }
 }
@@ -277,6 +287,10 @@ impl Inner {
                 self.set_order(Some(order));
             }
             "RES_TYPE" => { self.set_res_type(Some(literal_str.to_string())) }
+            "CREATE" => {
+                let b = literal_str.parse::<bool>().expect(&*format!("[{literal_str}] is invalid;sql_type:update -> create arg value shoule be one of [true,false]"));
+                self.set_create(Some(b))
+            }
             _other => { panic!("function inside: invalid arg name") }
         }
     }
@@ -292,6 +306,7 @@ impl Default for Inner {
             page: None,
             order: None,
             res_type: None,
+            create: None,
         }
     }
 }
