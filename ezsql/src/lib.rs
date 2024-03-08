@@ -52,7 +52,7 @@ fn build_constructor(attr: TokenStream, item: TokenStream) -> proc_macro2::Token
             }
             SqlType::READ => { panic!() }
             SqlType::UPDATE => { panic!() }
-            SqlType::DELETE => { panic!() }
+            SqlType::DELETE => { buidl_delete_constructor(inner, struct_info.get_field_infos(), state.get_table_name(), &struct_table_field_map) }
         };
         constructors = quote! {
             #constructors
@@ -64,6 +64,54 @@ fn build_constructor(attr: TokenStream, item: TokenStream) -> proc_macro2::Token
         #input
         impl #impl_generics #struct_name #ty_generics #where_clause {
              #constructors
+        }
+    }
+}
+
+fn buidl_delete_constructor(inner: &Inner, field_infos: &HashMap<String, Type>, table_name: &String, struct_table_field_map: &HashMap<String, String>) -> proc_macro2::TokenStream {
+    let mut sql = String::from("DELETE FROM ");
+    sql.push_str(table_name);
+    let fn_name = inner.get_fn_name();
+    let fn_name_ident = format_ident!("{fn_name}");
+    match inner.get_condition() {
+        None => {
+            quote!(
+                pub fn #fn_name_ident(conn: &mut pig::mysql::PooledConn){
+                    use pig::mysql::prelude::Queryable;
+                    use pig::err::TransError;
+                    use pig::logger::error;
+                    let _ = conn.query_drop(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                }
+            )
+        }
+        Some(map) => {
+            sql.push_str(" WHERE ");
+            let mut params = Vec::new();
+            let mut field_names = Vec::new();
+            let mut param_types = Vec::new();
+            for (index, (field_name, condition)) in map.iter().enumerate() {
+                if index > 0 {
+                    sql.push_str(" AND ")
+                }
+                let table_field_name = struct_table_field_map.get(&*field_name).expect(&*format!("fn = {},condition field {} is invalid", &fn_name, &field_name));
+                sql.push_str(&*table_field_name);
+                sql.push_str(condition.get_value());
+                field_names.push(field_name.clone());
+                sql.push_str(&*format!(":{}", &field_name));
+                params.push(format_ident!("{}",&field_name));
+                param_types.push(field_infos.get(&*field_name).unwrap().clone());
+            }
+            quote!(
+                pub fn #fn_name_ident(conn: &mut pig::mysql::PooledConn,#(#params:#param_types),*){
+                    use pig::mysql::prelude::Queryable;
+                    use pig::err::TransError;
+                    use pig::mysql::params;
+                    use pig::logger::error;
+                    let _ = conn.exec_drop(#sql,params!{
+                        #(#field_names => #params),*
+                    }).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                }
+            )
         }
     }
 }
@@ -85,13 +133,14 @@ fn build_create_constructor(inner: &Inner, sql_type_ext: &SqlTypeExt, table_name
     match *sql_type_ext {
         SqlTypeExt::SINGLE => {
             quote!(
-                 fn #fn_name_ident(&self, conn: &mut pig::mysql::PooledConn) {
+                pub fn #fn_name_ident(&self, conn: &mut pig::mysql::PooledConn) {
                     use pig::mysql::prelude::Queryable;
                     use pig::mysql::params;
-                    conn.exec_drop(#sql,params!{
+                    use pig::err::TransError;
+                    use pig::logger::error;
+                    let _ = conn.exec_drop(#sql,params!{
                         #(#struct_field_name_vec => &self.#field_value_ident()),*
-                    })
-                    .unwrap_or_else(|err|{pig::logger::error!("{}数据库操作失败,err={}",#fn_name,err)});
+                    }).hand_err(|msg| error!("数据库操作失败: {msg}"));
                 }
             )
         }
@@ -100,10 +149,11 @@ fn build_create_constructor(inner: &Inner, sql_type_ext: &SqlTypeExt, table_name
                 pub fn #fn_name_ident(vec:Vec<Self>, conn: &mut pig::mysql::PooledConn) {
                     use pig::mysql::prelude::Queryable;
                     use pig::mysql::params;
-                    conn.exec_batch(#sql,vec.iter().map(|p|params!{
+                    use pig::err::TransError;
+                    use pig::logger::error;
+                    let _ = conn.exec_batch(#sql,vec.iter().map(|p|params!{
                        #(#struct_field_name_vec => &p.#field_value_ident()),*
-                    }))
-                    .unwrap_or_else(|err|{pig::logger::error!("{}数据库操作失败,err={}",#fn_name,err)});
+                    })).hand_err(|msg| error!("数据库操作失败: {msg}"));
                 }
             )
         }

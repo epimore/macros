@@ -3,3 +3,9 @@ select()_by(a,b,c)
 insert(a,b,c) 单条插入，批量插入
 update(a,b,c) 单条插入，批量插入更新(ON DUPLICATE KEY UPDATE)
 delete_by(a,b)
+
+
+v0.1
+insert(a,b,c) 单条插入，批量插入
+
+后期扩展为自定义条件；引入in,DELETE FROM customers WHERE customer_id IN (SELECT customer_id FROM orders WHERE order_date < '2023-01-01');
