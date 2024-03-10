@@ -12,8 +12,6 @@ pub const GT: &str = ">";
 pub const EQ_LT: &str = "<=";
 pub const EQ_GT: &str = ">=";
 pub const NEQ: &str = "!=";
-pub const IN: &str = "IN";
-pub const NOT_IN: &str = "NOT IN";
 
 pub enum Condition {
     EQ,
@@ -22,8 +20,6 @@ pub enum Condition {
     EqLt,
     EqGt,
     NEQ,
-    IN,
-    NOT_IN,
 }
 
 impl Condition {
@@ -35,9 +31,7 @@ impl Condition {
             EQ_LT | "=<" => Condition::EqLt,
             EQ_GT | "=>" => Condition::EqGt,
             NEQ | "=>" => Condition::NEQ,
-            IN | "=>" => Condition::IN,
-            NOT_IN | "=>" => Condition::NOT_IN,
-            &_ => { panic!("invalid Condition;should be one of [>,=,<,>=,=>,<=,=<,!=,IN,ONT_IN]") }
+            &_ => { panic!("invalid Condition;should be one of [>,=,<,>=,=>,<=,=<,!=]") }
         }
     }
 
@@ -49,8 +43,6 @@ impl Condition {
             Condition::EqLt => EQ_LT,
             Condition::EqGt => EQ_GT,
             Condition::NEQ => NEQ,
-            Condition::IN => IN,
-            Condition::NOT_IN => NOT_IN,
         }
     }
 }

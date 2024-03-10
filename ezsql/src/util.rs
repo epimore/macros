@@ -143,7 +143,7 @@ impl Debug for State {
 
 impl State {
     fn parse_ident(&mut self, ident_str: &str, literal_str: &str) {
-        let literal_str = &*literal_str.replace(" ", "").replace("\"", "");
+        let literal_str = &*literal_str.trim().replace("\"", "");
         match &*ident_str.trim().to_ascii_uppercase() {
             "TABLE_NAME" => {
                 self.set_table_name(literal_str.to_string());
@@ -178,8 +178,10 @@ pub struct Inner {
     order: Option<HashMap<String, Order>>,
     //用于read返回值未指定时，返回struct；可以是基本数据类型及元组;eg:(u32,String,bool)
     res_type: Option<String>,
-    //用于update时：不存在则新增；默认None及false为不新增
-    create: Option<bool>,
+    //用于create时：存在则更新；默认None及false为不新增
+    update: Option<bool>,
+    //用于read：where前段sql语句,后会拼接condition条件，可用于统计数量等，自定义sql前段可使用sql函数:
+    pre_where_sql: Option<String>,
 }
 
 impl Debug for Inner {
@@ -234,8 +236,15 @@ impl Debug for Inner {
                 write!(f, "Some({})", val)?;
             }
         }
-        write!(f, ", create: ")?;
-        match &self.create {
+        write!(f, ", update: ")?;
+        match &self.update {
+            None => { write!(f, "None")? }
+            Some(val) => {
+                write!(f, "Some({})", val)?;
+            }
+        }
+        write!(f, ", pre_where_sql: ")?;
+        match &self.update {
             None => { write!(f, "None")? }
             Some(val) => {
                 write!(f, "Some({})", val)?;
@@ -247,7 +256,7 @@ impl Debug for Inner {
 
 impl Inner {
     fn parse_ident(&mut self, ident_str: &str, literal_str: &str) {
-        let literal_str = &*literal_str.replace(" ", "").replace("\"", "");
+        let literal_str = &*literal_str.trim().replace("\"", "");
         match &*ident_str.trim().to_ascii_uppercase() {
             "FN_NAME" => { self.set_fn_name(literal_str.to_string()); }
             "SQL_TYPE" => {
@@ -287,10 +296,11 @@ impl Inner {
                 self.set_order(Some(order));
             }
             "RES_TYPE" => { self.set_res_type(Some(literal_str.to_string())) }
-            "CREATE" => {
-                let b = literal_str.parse::<bool>().expect(&*format!("[{literal_str}] is invalid;sql_type:update -> create arg value shoule be one of [true,false]"));
-                self.set_create(Some(b))
+            "UPDATE" => {
+                let b = literal_str.parse::<bool>().expect(&*format!("[{literal_str}] is invalid;sql_type:create -> update arg value shoule be one of [true,false]"));
+                self.set_update(Some(b))
             }
+            "PRE_WHERE_SQL" => { self.set_res_type(Some(literal_str.to_string())) }
             _other => { panic!("function inside: invalid arg name") }
         }
     }
@@ -306,26 +316,29 @@ impl Default for Inner {
             page: None,
             order: None,
             res_type: None,
-            create: None,
+            update: None,
+            pre_where_sql: None,
         }
     }
 }
 
 fn literal_split_by_comma(literal: &str) -> Vec<String> {
-    let vec = literal.split(",").map(|str| str.to_string()).collect::<Vec<String>>();
+    let vec = literal.split(",").map(|str| str.trim().to_string()).collect::<Vec<String>>();
     vec
 }
 
 fn literal_split_by_colon(ident_str: &str, literal: &str) -> HashMap<String, String> {
     let mut map: HashMap<String, String> = HashMap::new();
-    for single_str in literal.split(",").collect::<Vec<_>>() {
+    for single_str in literal.split(",").map(|str| str.trim()).collect::<Vec<_>>() {
         match &*ident_str.to_ascii_uppercase() {
             "SQL_TYPE" => {
                 match &*single_str.to_ascii_uppercase() {
                     UPDATE => { map.insert(tools::UPDATE.to_string(), SINGLE.to_string()); }
                     DELETE => { map.insert(tools::DELETE.to_string(), SINGLE.to_string()); }
                     cr_str => {
-                        let tuple_cr_str = cr_str.split_once(":").expect(&*format!("[{cr_str}] is invalid;sql_type->[create,read] should have one subtype [single,batch]"));
+                        let tuple_cr_str = cr_str.split_once(":")
+                            .map(|(t, e)| (t.trim(), e.trim()))
+                            .expect(&*format!("[{cr_str}] is invalid;sql_type->[create,read] should have one subtype [single,batch]"));
                         match tuple_cr_str {
                             (READ, SINGLE) => { map.insert(tools::READ.to_string(), tools::SINGLE.to_string()); }
                             (READ, BATCH) => { map.insert(tools::READ.to_string(), tools::BATCH.to_string()); }
@@ -337,19 +350,27 @@ fn literal_split_by_colon(ident_str: &str, literal: &str) -> HashMap<String, Str
                 }
             }
             "ALIAS_FIELDS" => {
-                let tuple_alias_fields_str = single_str.split_once(":").expect(&*format!("[{single_str}] is invalid;alias_fields should like [struct_field_name:table_field_name]"));
+                let tuple_alias_fields_str = single_str.split_once(":")
+                    .map(|(t, e)| (t.trim(), e.trim()))
+                    .expect(&*format!("[{single_str}] is invalid;alias_fields should like [struct_field_name:table_field_name]"));
                 map.insert(tuple_alias_fields_str.0.to_string(), tuple_alias_fields_str.1.to_string());
             }
             "CONDITION" => {
-                let tuple_condition_str = single_str.split_once(":").expect(&*format!("[{single_str}] is invalid;condition should like [struct_field_name:condition],condition is one of [=,>,<,=<,=>]"));
+                let tuple_condition_str = single_str.split_once(":")
+                    .map(|(t, e)| (t.trim(), e.trim()))
+                    .expect(&*format!("[{single_str}] is invalid;condition should like [struct_field_name:condition],condition is one of [=,>,<,=<,=>]"));
                 map.insert(tuple_condition_str.0.to_string(), tuple_condition_str.1.to_string());
             }
             "PAGE" => {
-                let tuple_page_str = single_str.split_once(":").expect(&*format!("[{single_str}] is invalid;page should like [page_number:page_size];eg 1:100"));
+                let tuple_page_str = single_str.split_once(":")
+                    .map(|(t, e)| (t.trim(), e.trim()))
+                    .expect(&*format!("[{single_str}] is invalid;page should like [page_number:page_size];eg 1:100"));
                 map.insert(tuple_page_str.0.to_string(), tuple_page_str.1.to_string());
             }
             "ORDER" => {
-                let tuple_order_str = single_str.split_once(":").expect(&*format!("[{single_str}] is invalid;order should like [table_field_name1:ASC,table_field_name2:DESC]"));
+                let tuple_order_str = single_str.split_once(":")
+                    .map(|(t, e)| (t.trim(), e.trim()))
+                    .expect(&*format!("[{single_str}] is invalid;order should like [table_field_name1:ASC,table_field_name2:DESC]"));
                 match tuple_order_str.1 {
                     DESC => { map.insert(tuple_order_str.0.to_string(), tools::DESC.to_string()); }
                     ASC => { map.insert(tuple_order_str.0.to_string(), tools::ASC.to_string()); }
