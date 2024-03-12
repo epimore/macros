@@ -2,7 +2,6 @@ use proc_macro::TokenStream;
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Debug;
-use std::ops::Index;
 use proc_macro2::TokenTree;
 use quote::ToTokens;
 use syn::{Data, DeriveInput, Type};
@@ -20,7 +19,7 @@ pub fn parse_item(derive_input: DeriveInput) -> StructInfo {
                         field_infos.insert(field_name.to_string(), field_type.clone());
                     }
                 }
-                syn::Fields::Unnamed(ref fields) => panic!("Unnamed struct is not supported"),
+                syn::Fields::Unnamed(ref _fields) => panic!("Unnamed struct is not supported"),
                 syn::Fields::Unit => panic!("Unit struct is not supported"),
             }
         }
@@ -527,14 +526,6 @@ pub fn to_snake_case(s: &str) -> String {
         res = res.split_off(1);
     }
     res
-}
-
-pub enum Private {
-    CREATE,
-    READ(),
-    UPDATE,
-    DELETE,
-
 }
 
 #[test]

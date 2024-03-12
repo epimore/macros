@@ -2,37 +2,16 @@ mod util;
 
 use proc_macro::TokenStream;
 use std::collections::HashMap;
-use std::fmt::{self, Debug, Display, format};
-use proc_macro2::{Group, Ident, Literal, TokenTree};
-use quote::{format_ident, quote, ToTokens};
-use syn::{parse_macro_input, Attribute, parse, Type};
+use proc_macro2::{Ident};
+use quote::{format_ident, quote};
+use syn::{Type};
 use syn::DeriveInput;
-use syn::parse::Parser;
-use syn::spanned::Spanned;
-use constructor::Set;
 use util::*;
 
 
 #[proc_macro_attribute]
 pub fn crud(attr: TokenStream, item: TokenStream) -> TokenStream {
-    println!("begin ++++++");
-    println!("attr: \"{}\"", &attr.to_string());
-    println!("item: \"{}\"", &item.to_string());
-    println!("*************");
-    let attr_state = parse_attr(attr.clone());
-    println!("------------  {attr_state:?}");
-    println!("*************");
-    println!("*************");
-    let stream = item.clone();
-    let item_input = parse_macro_input!(stream as DeriveInput);
-    let struct_info = parse_item(item_input.clone());
-    println!("-------{:?}", struct_info);
-    println!("*************");
-    println!("over ++++++\n\n");
-
     let constructor = build_constructor(attr, item);
-
-    println!("+++++++ fn----> \n\n{}", &constructor.to_string());
     constructor.into()
 }
 
@@ -548,7 +527,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
     }
 }
 
-macro_rules! map_query_result {
+/*macro_rules! map_query_result {
     ($row:expr, $struct_name:ident { $($field:ident : $ty:ty),* }) => {
         $struct_name {
             $(
@@ -556,7 +535,7 @@ macro_rules! map_query_result {
             )*
         }
     };
-}
+}*/
 
 fn build_read_sql(inner: &Inner, table_name: &String, struct_table_field_map: &HashMap<String, String>, field_infos: &HashMap<String, Type>)
                   -> (String, Option<Vec<Ident>>, Option<Vec<(Ident, Type)>>) {
@@ -642,11 +621,11 @@ fn build_read_sql(inner: &Inner, table_name: &String, struct_table_field_map: &H
     }
 }
 
-fn build_update_constructor(inner: &Inner, field_infos: &HashMap<String, Type>, sql_type_ext: &SqlTypeExt, table_name: &String, struct_table_field_map: &HashMap<String, String>) -> proc_macro2::TokenStream {
+fn build_update_constructor(inner: &Inner, field_infos: &HashMap<String, Type>, _sql_type_ext: &SqlTypeExt, table_name: &String, struct_table_field_map: &HashMap<String, String>) -> proc_macro2::TokenStream {
     let mut sql = String::from("UPDATE ");
     sql.push_str(table_name);
     sql.push_str(" SET ");
-    let (update_str, mut struct_fields_vec, mut struct_field_ident_vec) = build_update_fields_vec(&struct_table_field_map, inner.get_fields());
+    let (update_str, struct_fields_vec, struct_field_ident_vec) = build_update_fields_vec(&struct_table_field_map, inner.get_fields());
     sql.push_str(&*update_str);
     let fn_name = inner.get_fn_name();
     let fn_name_ident = format_ident!("{fn_name}");
@@ -918,8 +897,4 @@ fn build_struct_to_table_field_map(attr_state: &State, struct_info: &StructInfo)
         }
     }
     res_map
-}
-
-fn check_method(origin_str: &str, struct_field_str: &str) -> bool {
-    origin_str.starts_with("$") && origin_str.ends_with(&*format!("({})", struct_field_str))
 }
