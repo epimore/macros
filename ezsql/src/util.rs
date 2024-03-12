@@ -7,7 +7,6 @@ use proc_macro2::TokenTree;
 use quote::ToTokens;
 use syn::{Data, DeriveInput, Type};
 use constructor::{Get, Set};
-use tools::{ASC, BATCH, Condition, CREATE, DELETE, DESC, Order, READ, SINGLE, SqlType, SqlTypeExt, UPDATE};
 
 pub fn parse_item(derive_input: DeriveInput) -> StructInfo {
     let mut field_infos = HashMap::new();
@@ -172,8 +171,8 @@ pub struct Inner {
     fields: Option<Vec<String>>,
     //条件字段，NONE=不控制
     condition: Option<HashMap<String, Condition>>,
-    //用于read分页(page_num,page_size)
-    page: Option<(u32, u32)>,
+    //用于read分页
+    page: Option<bool>,
     //用于read排序
     order: Option<HashMap<String, Order>>,
     //用于read返回值转换，默认：some(true) 返回struct，其他ROW
@@ -186,7 +185,7 @@ pub struct Inner {
 
 impl Debug for Inner {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Inner {{ fn_name: {}, sql_type: ({},{}), fields: ", &self.fn_name, &self.sql_type.0.get_value(), &self.sql_type.1.get_value())?;
+        write!(f, "Inner {{ fn_name: {}, sql_type: ({}:{}), fields: ", &self.fn_name, &self.sql_type.0.get_value(), &self.sql_type.1.get_value())?;
         match &self.fields {
             None => { write!(f, "None")?; }
             Some(vec) => {
@@ -205,7 +204,7 @@ impl Debug for Inner {
                 write!(f, "Some([")?;
                 for (i, item) in vec.iter().enumerate() {
                     if i > 0 { write!(f, ", ")?; }
-                    write!(f, "{{{},{}}}", item.0, item.1.get_value())?;
+                    write!(f, "{{{}:{}}}", item.0, item.1.get_value())?;
                 }
                 write!(f, "])")?;
             }
@@ -214,7 +213,7 @@ impl Debug for Inner {
         match &self.page {
             None => { write!(f, "None")? }
             Some(val) => {
-                write!(f, "Some(({},{}))", val.0, val.1)?;
+                write!(f, "Some({})", val)?;
             }
         }
         write!(f, ", order: ")?;
@@ -269,7 +268,7 @@ impl Inner {
                 let sql_type_ext = SqlTypeExt::match_type(&*ste.get(0).unwrap());
                 self.set_sql_type((sql_type, sql_type_ext));
             }
-            "FIELDS" => { self.set_fields(Some(literal_split_by_comma(literal_str))) }
+            "FIELDS" => { self.set_fields(Some(literal_split_by_comma(literal_str))); }
             "CONDITION" => {
                 let map = literal_split_by_colon(ident_str, literal_str);
                 if map.is_empty() { panic!("condition is invalid") }
@@ -279,14 +278,8 @@ impl Inner {
                 self.set_condition(Some(condition));
             }
             "PAGE" => {
-                let map = literal_split_by_colon(ident_str, literal_str);
-                if map.is_empty() {
-                    panic!("page is invalid");
-                }
-                let (page_num, page_size): (Vec<_>, Vec<_>) = map.iter().unzip();
-                let page_num = page_num.get(0).unwrap().parse::<u32>().expect("page_num is invalid");
-                let page_size = page_size.get(0).unwrap().parse::<u32>().expect("page_size is invalid");
-                self.set_page(Some((page_num, page_size)));
+                let b = literal_str.parse::<bool>().expect(&*format!("[{literal_str}] is invalid;page shoule be one of [true,false]"));
+                self.set_page(Some(b));
             }
             "ORDER" => {
                 let map = literal_split_by_colon(ident_str, literal_str);
@@ -297,13 +290,13 @@ impl Inner {
             }
             "RES_TYPE" => {
                 let b = literal_str.parse::<bool>().expect(&*format!("[{literal_str}] is invalid;res_type shoule be one of [true,false]"));
-                self.set_res_type(Some(b))
+                self.set_res_type(Some(b));
             }
             "EXIST_UPDATE" => {
                 let b = literal_str.parse::<bool>().expect(&*format!("[{literal_str}] is invalid;sql_type:create -> exist_update arg value shoule be one of [true,false]"));
-                self.set_exist_update(Some(b))
+                self.set_exist_update(Some(b));
             }
-            "PRE_WHERE_SQL" => { self.set_pre_where_sql(Some(literal_str.to_string())) }
+            "PRE_WHERE_SQL" => { self.set_pre_where_sql(Some(literal_str.to_string())); }
             _other => { panic!("function inside: invalid arg name") }
         }
     }
@@ -336,17 +329,17 @@ fn literal_split_by_colon(ident_str: &str, literal: &str) -> HashMap<String, Str
         match &*ident_str.to_ascii_uppercase() {
             "SQL_TYPE" => {
                 match &*single_str.to_ascii_uppercase() {
-                    UPDATE => { map.insert(tools::UPDATE.to_string(), SINGLE.to_string()); }
-                    DELETE => { map.insert(tools::DELETE.to_string(), SINGLE.to_string()); }
+                    UPDATE => { map.insert(UPDATE.to_string(), SINGLE.to_string()); }
+                    DELETE => { map.insert(DELETE.to_string(), SINGLE.to_string()); }
                     cr_str => {
                         let tuple_cr_str = cr_str.split_once(":")
                             .map(|(t, e)| (t.trim(), e.trim()))
                             .expect(&*format!("[{cr_str}] is invalid;sql_type->[create,read] should have one subtype [single,batch]"));
                         match tuple_cr_str {
-                            (READ, SINGLE) => { map.insert(tools::READ.to_string(), tools::SINGLE.to_string()); }
-                            (READ, BATCH) => { map.insert(tools::READ.to_string(), tools::BATCH.to_string()); }
-                            (CREATE, SINGLE) => { map.insert(tools::CREATE.to_string(), tools::SINGLE.to_string()); }
-                            (CREATE, BATCH) => { map.insert(tools::CREATE.to_string(), tools::BATCH.to_string()); }
+                            (READ, SINGLE) => { map.insert(READ.to_string(), SINGLE.to_string()); }
+                            (READ, BATCH) => { map.insert(READ.to_string(), BATCH.to_string()); }
+                            (CREATE, SINGLE) => { map.insert(CREATE.to_string(), SINGLE.to_string()); }
+                            (CREATE, BATCH) => { map.insert(CREATE.to_string(), BATCH.to_string()); }
                             other => { panic!("[({}:{})] is invalid;should like [create:single,update,read:batch,delete]", other.0, other.1) }
                         }
                     }
@@ -364,19 +357,13 @@ fn literal_split_by_colon(ident_str: &str, literal: &str) -> HashMap<String, Str
                     .expect(&*format!("[{single_str}] is invalid;condition should like [struct_field_name:condition],condition is one of [=,>,<,=<,=>]"));
                 map.insert(tuple_condition_str.0.to_string(), tuple_condition_str.1.to_string());
             }
-            "PAGE" => {
-                let tuple_page_str = single_str.split_once(":")
-                    .map(|(t, e)| (t.trim(), e.trim()))
-                    .expect(&*format!("[{single_str}] is invalid;page should like [page_number:page_size];eg 1:100"));
-                map.insert(tuple_page_str.0.to_string(), tuple_page_str.1.to_string());
-            }
             "ORDER" => {
                 let tuple_order_str = single_str.split_once(":")
                     .map(|(t, e)| (t.trim(), e.trim()))
                     .expect(&*format!("[{single_str}] is invalid;order should like [table_field_name1:ASC,table_field_name2:DESC]"));
                 match tuple_order_str.1 {
-                    DESC => { map.insert(tuple_order_str.0.to_string(), tools::DESC.to_string()); }
-                    ASC => { map.insert(tuple_order_str.0.to_string(), tools::ASC.to_string()); }
+                    DESC => { map.insert(tuple_order_str.0.to_string(), DESC.to_string()); }
+                    ASC => { map.insert(tuple_order_str.0.to_string(), ASC.to_string()); }
                     other => { panic!("[{other}] is invalid;order suffix should be one of [asc,desc]") }
                 }
             }
@@ -387,6 +374,184 @@ fn literal_split_by_colon(ident_str: &str, literal: &str) -> HashMap<String, Str
 }
 
 #[test]
-fn test() {
+fn test12() {
     println!("res_type = {:?}", Inner::default());
+}
+
+pub const CREATE: &str = "CREATE";
+pub const READ: &str = "READ";
+pub const UPDATE: &str = "UPDATE";
+pub const DELETE: &str = "DELETE";
+pub const ASC: &str = "ASC";
+pub const DESC: &str = "DESC";
+pub const SINGLE: &str = "SINGLE";
+pub const BATCH: &str = "BATCH";
+pub const EQ: &str = "=";
+pub const LT: &str = "<";
+pub const GT: &str = ">";
+pub const EQ_LT: &str = "<=";
+pub const EQ_GT: &str = ">=";
+pub const NEQ: &str = "!=";
+
+pub enum Condition {
+    EQ,
+    LT,
+    GT,
+    EqLt,
+    EqGt,
+    NEQ,
+}
+
+impl Condition {
+    pub fn match_type(str: &str) -> Self {
+        match str {
+            EQ => Condition::EQ,
+            LT => Condition::LT,
+            GT => Condition::GT,
+            EQ_LT | "=<" => Condition::EqLt,
+            EQ_GT | "=>" => Condition::EqGt,
+            NEQ => Condition::NEQ,
+            &_ => { panic!("invalid Condition;should be one of [>,=,<,>=,=>,<=,=<,!=]") }
+        }
+    }
+
+    pub fn get_value(&self) -> &str {
+        match self {
+            Condition::EQ => EQ,
+            Condition::LT => LT,
+            Condition::GT => GT,
+            Condition::EqLt => EQ_LT,
+            Condition::EqGt => EQ_GT,
+            Condition::NEQ => NEQ,
+        }
+    }
+}
+
+pub enum SqlType {
+    CREATE,
+    READ,
+    UPDATE,
+    DELETE,
+}
+
+impl SqlType {
+    pub fn match_type(str: &str) -> Self {
+        match &*str.to_ascii_uppercase() {
+            CREATE => { SqlType::CREATE }
+            READ => { SqlType::READ }
+            UPDATE => { SqlType::UPDATE }
+            DELETE => { SqlType::DELETE }
+            _ => { panic!("invalid SqlType;should be one of [CREATE,READ,UPDATE,DELETE]") }
+        }
+    }
+    pub fn get_value(&self) -> &str {
+        match self {
+            SqlType::CREATE => { CREATE }
+            SqlType::READ => { READ }
+            SqlType::UPDATE => { UPDATE }
+            SqlType::DELETE => { DELETE }
+        }
+    }
+}
+
+pub enum SqlTypeExt {
+    SINGLE,
+    BATCH,
+}
+
+impl SqlTypeExt {
+    pub fn match_type(str: &str) -> Self {
+        match &*str.to_ascii_uppercase() {
+            SINGLE => { SqlTypeExt::SINGLE }
+            BATCH => { SqlTypeExt::BATCH }
+            _ => { panic!("invalid SqlTypeExt;should be one of [SINGLE,BATCH]") }
+        }
+    }
+
+    pub fn get_value(&self) -> &str {
+        match self {
+            SqlTypeExt::SINGLE => { SINGLE }
+            SqlTypeExt::BATCH => { BATCH }
+        }
+    }
+}
+
+pub enum Order {
+    ASC,
+    DESC,
+}
+
+impl Order {
+    pub fn match_type(str: &str) -> Self {
+        match &*str.to_ascii_uppercase() {
+            ASC => { Order::ASC }
+            DESC => { Order::DESC }
+            _ => { panic!("invalid SqlType;should be one of [ASC,DESC]") }
+        }
+    }
+    pub fn get_value(&self) -> &str {
+        match self {
+            Order::ASC => { ASC }
+            Order::DESC => { DESC }
+        }
+    }
+}
+
+// pub trait Trans<Input,Output>{
+//     fn to_val(input:Input)-> Output;
+// }
+
+
+#[allow(dead_code)]
+pub fn to_snake_case(s: &str) -> String {
+    let mut res = String::new();
+    let mut pre_under_line = false;
+
+    for c in s.chars() {
+        if c.is_ascii_uppercase() {
+            if !pre_under_line {
+                res.push('_');
+            }
+            res.push(c.to_ascii_lowercase());
+        } else {
+            if c.eq(&'_') {
+                pre_under_line = true;
+            } else {
+                pre_under_line = false;
+            }
+            res.push(c)
+        }
+    }
+    //不允许下划线开始
+    if res.starts_with('_') {
+        res = res.split_off(1);
+    }
+    res
+}
+
+pub enum Private {
+    CREATE,
+    READ(),
+    UPDATE,
+    DELETE,
+
+}
+
+#[test]
+fn test() {
+    assert_eq!(to_snake_case("_abcde"), String::from("abcde"));
+    assert_eq!(to_snake_case("_Abcde"), String::from("abcde"));
+    assert_eq!(to_snake_case("_A_BcDe"), String::from("a_bc_de"));
+    assert_eq!(to_snake_case("A_Bcde"), String::from("a_bcde"));
+    assert_eq!(to_snake_case("A_bCde"), String::from("a_b_cde"));
+    assert_eq!(to_snake_case("AbCde"), String::from("ab_cde"));
+    assert_eq!(to_snake_case("A1bCde"), String::from("a1b_cde"));
+    assert_eq!(to_snake_case("Ab2Cde"), String::from("ab2_cde"));
+}
+
+#[test]
+fn test1() {
+    let sql_type = SqlType::match_type("UPDATE");
+    let x = sql_type.get_value();
+    println!("{x}");
 }

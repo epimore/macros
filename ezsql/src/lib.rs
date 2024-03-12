@@ -10,7 +10,6 @@ use syn::DeriveInput;
 use syn::parse::Parser;
 use syn::spanned::Spanned;
 use constructor::Set;
-use tools::*;
 use util::*;
 
 
@@ -73,14 +72,16 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
     let (sql, res_ident, condition_param_name_type) = build_read_sql(inner, table_name, struct_table_field_map, field_infos);
     let fn_name = inner.get_fn_name();
     let fn_name_ident = format_ident!("{fn_name}");
-    match *sql_type_ext {
-        SqlTypeExt::SINGLE => {
-            match condition_param_name_type {
-                None => {
-                    match res_ident {
-                        //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+    match inner.get_page() {
+        Some(true) => {
+            match *sql_type_ext {
+                SqlTypeExt::SINGLE => {
+                    match condition_param_name_type {
                         None => {
-                            quote!(
+                            match res_ident {
+                                //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+                                None => {
+                                    quote!(
                                     pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Option<T>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -88,12 +89,12 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
                                         Ok(res)
                                     })
-                        }
-                        Some(vec) => {
-                            match inner.get_res_type() {
-                                Some(true) => {
-                                    if vec.len() == field_infos.len() {
-                                        quote!(
+                                }
+                                Some(vec) => {
+                                    match inner.get_res_type() {
+                                        Some(true) => {
+                                            if vec.len() == field_infos.len() {
+                                                quote!(
                                     pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Option<#struct_name>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -101,8 +102,8 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
                                             Ok(res)
                                     })
-                                    } else {
-                                        quote!(
+                                            } else {
+                                                quote!(
                                     pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Option<#struct_name>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -110,10 +111,10 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
                                             Ok(res)
                                     })
-                                    }
-                                }
-                                _ => {
-                                    quote!(
+                                            }
+                                        }
+                                        _ => {
+                                            quote!(
                                     pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Option<T>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -121,17 +122,17 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-                Some(condition_param_vec) => {
-                    let (param_name, param_type): (Vec<_>, Vec<_>) = condition_param_vec.iter().cloned().unzip();
-                    match res_ident {
-                        //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
-                        None => {
-                            quote!(
+                        Some(condition_param_vec) => {
+                            let (param_name, param_type): (Vec<_>, Vec<_>) = condition_param_vec.iter().cloned().unzip();
+                            match res_ident {
+                                //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+                                None => {
+                                    quote!(
                                     pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Option<T>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -142,12 +143,12 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
                                     Ok(res)
                                     })
-                        }
-                        Some(vec) => {
-                            match inner.get_res_type() {
-                                Some(true) => {
-                                    if vec.len() == field_infos.len() {
-                                        quote!(
+                                }
+                                Some(vec) => {
+                                    match inner.get_res_type() {
+                                        Some(true) => {
+                                            if vec.len() == field_infos.len() {
+                                                quote!(
                                     pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Option<#struct_name>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -157,8 +158,8 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                             #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
                                             Ok(res)
                                     })
-                                    } else {
-                                        quote!(
+                                            } else {
+                                                quote!(
                                     pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Option<#struct_name>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -168,10 +169,10 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                             #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
                                             Ok(res)
                                     })
-                                    }
-                                }
-                                _ => {
-                                    quote!(
+                                            }
+                                        }
+                                        _ => {
+                                            quote!(
                                     pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Option<T>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -182,6 +183,125 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                SqlTypeExt::BATCH => {
+                    match condition_param_name_type {
+                        None => {
+                            match res_ident {
+                                //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+                                None => {
+                                    quote!(
+                                    pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,_limit_start:u32, _limit_end:u32)->pig::err::GlobalResult<Vec<T>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                    Ok(res)
+                                    })
+                                }
+                                Some(vec) => {
+                                    match inner.get_res_type() {
+                                        Some(true) => {
+                                            if vec.len() == field_infos.len() {
+                                                quote!(
+                                    pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,_limit_start:u32, _limit_end:u32)->pig::err::GlobalResult<Vec<#struct_name>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
+                                            Ok(res)
+                                    })
+                                            } else {
+                                                quote!(
+                                    pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,_limit_start:u32, _limit_end:u32)->pig::err::GlobalResult<Vec<#struct_name>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
+                                                .map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()}).collect();
+                                            Ok(res)
+                                    })
+                                            }
+                                        }
+                                        _ => {
+                                            quote!(
+                                    pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,_limit_start:u32, _limit_end:u32)->pig::err::GlobalResult<Vec<T>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                            Ok(res)
+                                    })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Some(condition_param_vec) => {
+                            let (param_name, param_type): (Vec<_>, Vec<_>) = condition_param_vec.iter().cloned().unzip();
+                            match res_ident {
+                                //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+                                None => {
+                                    quote!(
+                                    pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,_limit_start:u32, _limit_end:u32,#(#param_name:#param_type),*)->pig::err::GlobalResult<Vec<T>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        use pig::mysql::params;
+                                        let res = conn.exec(#sql,params!{
+                                            #(#param_name),*,_limit_start,_limit_end
+                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                    Ok(res)
+                                    })
+                                }
+                                Some(vec) => {
+                                    match inner.get_res_type() {
+                                        Some(true) => {
+                                            if vec.len() == field_infos.len() {
+                                                quote!(
+                                    pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,_limit_start:u32, _limit_end:u32,#(#param_name:#param_type),*)->pig::err::GlobalResult<Vec<#struct_name>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        use pig::mysql::params;
+                                        let res = conn.exec(#sql,params!{
+                                            #(#param_name),*,_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
+                                            Ok(res)
+                                    })
+                                            } else {
+                                                quote!(
+                                    pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,_limit_start:u32, _limit_end:u32,#(#param_name:#param_type),*)->pig::err::GlobalResult<Vec<#struct_name>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        use pig::mysql::params;
+                                        let res = conn.exec(#sql,params!{
+                                            #(#param_name),*,_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
+                                                .map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()}).collect();
+                                            Ok(res)
+                                    })
+                                            }
+                                        }
+                                        _ => {
+                                            quote!(
+                                    pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,_limit_start:u32, _limit_end:u32,#(#param_name:#param_type),*)->pig::err::GlobalResult<Vec<T>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        use pig::mysql::params;
+                                        let res =  conn.exec(#sql,params!{
+                                            #(#param_name),*,_limit_start,_limit_end
+                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                            Ok(res)
+                                    })
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -189,13 +309,130 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                 }
             }
         }
-        SqlTypeExt::BATCH => {
-            match condition_param_name_type {
-                None => {
-                    match res_ident {
-                        //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+        _ => {
+            match *sql_type_ext {
+                SqlTypeExt::SINGLE => {
+                    match condition_param_name_type {
                         None => {
-                            quote!(
+                            match res_ident {
+                                //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+                                None => {
+                                    quote!(
+                                    pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Option<T>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        Ok(res)
+                                    })
+                                }
+                                Some(vec) => {
+                                    match inner.get_res_type() {
+                                        Some(true) => {
+                                            if vec.len() == field_infos.len() {
+                                                quote!(
+                                    pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Option<#struct_name>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
+                                            Ok(res)
+                                    })
+                                            } else {
+                                                quote!(
+                                    pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Option<#struct_name>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
+                                            Ok(res)
+                                    })
+                                            }
+                                        }
+                                        _ => {
+                                            quote!(
+                                    pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Option<T>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                            Ok(res)
+                                    })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Some(condition_param_vec) => {
+                            let (param_name, param_type): (Vec<_>, Vec<_>) = condition_param_vec.iter().cloned().unzip();
+                            match res_ident {
+                                //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+                                None => {
+                                    quote!(
+                                    pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Option<T>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        use pig::mysql::params;
+                                        let res = conn.exec_first(#sql,params!{
+                                            #(#param_name),*
+                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                    Ok(res)
+                                    })
+                                }
+                                Some(vec) => {
+                                    match inner.get_res_type() {
+                                        Some(true) => {
+                                            if vec.len() == field_infos.len() {
+                                                quote!(
+                                    pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Option<#struct_name>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        use pig::mysql::params;
+                                       let res = conn.exec_first(#sql,params!{
+                                            #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
+                                            Ok(res)
+                                    })
+                                            } else {
+                                                quote!(
+                                    pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Option<#struct_name>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        use pig::mysql::params;
+                                       let res = conn.exec_first(#sql,params!{
+                                            #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
+                                            Ok(res)
+                                    })
+                                            }
+                                        }
+                                        _ => {
+                                            quote!(
+                                    pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Option<T>>{
+                                        use pig::mysql::prelude::Queryable;
+                                        use pig::err::TransError;
+                                        use pig::logger::error;
+                                        use pig::mysql::params;
+                                        let res = conn.exec_first(#sql,params!{
+                                            #(#param_name),*
+                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                            Ok(res)
+                                    })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                SqlTypeExt::BATCH => {
+                    match condition_param_name_type {
+                        None => {
+                            match res_ident {
+                                //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+                                None => {
+                                    quote!(
                                     pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Vec<T>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -203,12 +440,12 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         let res = conn.query(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
                                     Ok(res)
                                     })
-                        }
-                        Some(vec) => {
-                            match inner.get_res_type() {
-                                Some(true) => {
-                                    if vec.len() == field_infos.len() {
-                                        quote!(
+                                }
+                                Some(vec) => {
+                                    match inner.get_res_type() {
+                                        Some(true) => {
+                                            if vec.len() == field_infos.len() {
+                                                quote!(
                                     pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Vec<#struct_name>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -216,8 +453,8 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         let res = conn.query(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
                                             Ok(res)
                                     })
-                                    } else {
-                                        quote!(
+                                            } else {
+                                                quote!(
                                     pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Vec<#struct_name>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -226,10 +463,10 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                                 .map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()}).collect();
                                             Ok(res)
                                     })
-                                    }
-                                }
-                                _ => {
-                                    quote!(
+                                            }
+                                        }
+                                        _ => {
+                                            quote!(
                                     pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn)->pig::err::GlobalResult<Vec<T>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -237,17 +474,17 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         let res = conn.query(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-                Some(condition_param_vec) => {
-                    let (param_name, param_type): (Vec<_>, Vec<_>) = condition_param_vec.iter().cloned().unzip();
-                    match res_ident {
-                        //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
-                        None => {
-                            quote!(
+                        Some(condition_param_vec) => {
+                            let (param_name, param_type): (Vec<_>, Vec<_>) = condition_param_vec.iter().cloned().unzip();
+                            match res_ident {
+                                //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
+                                None => {
+                                    quote!(
                                     pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Vec<T>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -258,12 +495,12 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
                                     Ok(res)
                                     })
-                        }
-                        Some(vec) => {
-                            match inner.get_res_type() {
-                                Some(true) => {
-                                    if vec.len() == field_infos.len() {
-                                        quote!(
+                                }
+                                Some(vec) => {
+                                    match inner.get_res_type() {
+                                        Some(true) => {
+                                            if vec.len() == field_infos.len() {
+                                                quote!(
                                     pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Vec<#struct_name>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -273,8 +510,8 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                             #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
                                             Ok(res)
                                     })
-                                    } else {
-                                        quote!(
+                                            } else {
+                                                quote!(
                                     pub fn #fn_name_ident(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Vec<#struct_name>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -285,10 +522,10 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                                 .map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()}).collect();
                                             Ok(res)
                                     })
-                                    }
-                                }
-                                _ => {
-                                    quote!(
+                                            }
+                                        }
+                                        _ => {
+                                            quote!(
                                     pub fn #fn_name_ident<T: pig::mysql::prelude::FromRow>(&self,conn: &mut pig::mysql::PooledConn,#(#param_name:#param_type),*)->pig::err::GlobalResult<Vec<T>>{
                                         use pig::mysql::prelude::Queryable;
                                         use pig::err::TransError;
@@ -299,6 +536,8 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -340,8 +579,8 @@ fn build_read_sql(inner: &Inner, table_name: &String, struct_table_field_map: &H
         None => {
             match inner.get_order() {
                 None => {
-                    if let Some((page_num, page_size)) = inner.get_page() {
-                        sql.push_str(&*format!(" LIMIT {}, {}", page_num * page_size, page_size));
+                    if let Some(true) = inner.get_page() {
+                        sql.push_str(&*format!(" LIMIT :_limit_start, :_limit_end"));
                     }
                 }
                 Some(order_map) => {
@@ -354,8 +593,8 @@ fn build_read_sql(inner: &Inner, table_name: &String, struct_table_field_map: &H
                         sql.push_str(&*order_field);
                         sql.push_str(&*format!(" {}", or.get_value()));
                     }
-                    if let Some((page_num, page_size)) = inner.get_page() {
-                        sql.push_str(&*format!(" LIMIT {}, {}", page_num * page_size, page_size));
+                    if let Some(true) = inner.get_page() {
+                        sql.push_str(&*format!(" LIMIT :_limit_start, :_limit_end"));
                     }
                 }
             }
@@ -375,8 +614,8 @@ fn build_read_sql(inner: &Inner, table_name: &String, struct_table_field_map: &H
             }
             match inner.get_order() {
                 None => {
-                    if let Some((page_num, page_size)) = inner.get_page() {
-                        sql.push_str(&*format!(" LIMIT {}, {}", page_num * page_size, page_size));
+                    if let Some(true) = inner.get_page() {
+                        sql.push_str(&*format!(" LIMIT :_limit_start, :_limit_end"));
                     }
                 }
                 Some(order_map) => {
@@ -389,8 +628,8 @@ fn build_read_sql(inner: &Inner, table_name: &String, struct_table_field_map: &H
                         sql.push_str(&*order_field);
                         sql.push_str(&*format!(" {}", or.get_value()));
                     }
-                    if let Some((page_num, page_size)) = inner.get_page() {
-                        sql.push_str(&*format!(" LIMIT {}, {}", page_num * page_size, page_size));
+                    if let Some(true) = inner.get_page() {
+                        sql.push_str(&*format!(" LIMIT :_limit_start, :_limit_end"));
                     }
                 }
             }

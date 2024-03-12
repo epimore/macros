@@ -12,6 +12,5 @@ proc-macro = true
 syn = { version = "2" }
 quote = "1.0"
 proc-macro2 = "1.0"
-tools = { path = "../tools" }
 constructor = { path = "../constructor" }
 pig = { path = "../../pig",features = ["db-mysql"] }
