@@ -176,10 +176,10 @@ pub struct Inner {
     page: Option<(u32, u32)>,
     //用于read排序
     order: Option<HashMap<String, Order>>,
-    //用于read返回值未指定时，返回struct；可以是基本数据类型及元组;eg:(u32,String,bool)
-    res_type: Option<String>,
+    //用于read返回值转换，默认：some(true) 返回struct，其他ROW
+    res_type: Option<bool>,
     //用于create时：存在则更新；默认None及false为不新增
-    update: Option<bool>,
+    exist_update: Option<bool>,
     //用于read：where前段sql语句,后会拼接condition条件，可用于统计数量等，自定义sql前段可使用sql函数:
     pre_where_sql: Option<String>,
 }
@@ -236,15 +236,15 @@ impl Debug for Inner {
                 write!(f, "Some({})", val)?;
             }
         }
-        write!(f, ", update: ")?;
-        match &self.update {
+        write!(f, ", exist_update: ")?;
+        match &self.exist_update {
             None => { write!(f, "None")? }
             Some(val) => {
                 write!(f, "Some({})", val)?;
             }
         }
         write!(f, ", pre_where_sql: ")?;
-        match &self.update {
+        match &self.exist_update {
             None => { write!(f, "None")? }
             Some(val) => {
                 write!(f, "Some({})", val)?;
@@ -295,12 +295,15 @@ impl Inner {
                     .collect::<HashMap<String, Order>>();
                 self.set_order(Some(order));
             }
-            "RES_TYPE" => { self.set_res_type(Some(literal_str.to_string())) }
-            "UPDATE" => {
-                let b = literal_str.parse::<bool>().expect(&*format!("[{literal_str}] is invalid;sql_type:create -> update arg value shoule be one of [true,false]"));
-                self.set_update(Some(b))
+            "RES_TYPE" => {
+                let b = literal_str.parse::<bool>().expect(&*format!("[{literal_str}] is invalid;res_type shoule be one of [true,false]"));
+                self.set_res_type(Some(b))
             }
-            "PRE_WHERE_SQL" => { self.set_res_type(Some(literal_str.to_string())) }
+            "EXIST_UPDATE" => {
+                let b = literal_str.parse::<bool>().expect(&*format!("[{literal_str}] is invalid;sql_type:create -> exist_update arg value shoule be one of [true,false]"));
+                self.set_exist_update(Some(b))
+            }
+            "PRE_WHERE_SQL" => { self.set_pre_where_sql(Some(literal_str.to_string())) }
             _other => { panic!("function inside: invalid arg name") }
         }
     }
@@ -315,8 +318,8 @@ impl Default for Inner {
             condition: None,
             page: None,
             order: None,
-            res_type: None,
-            update: None,
+            res_type: Some(true),
+            exist_update: None,
             pre_where_sql: None,
         }
     }

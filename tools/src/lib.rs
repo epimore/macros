@@ -30,7 +30,7 @@ impl Condition {
             GT => Condition::GT,
             EQ_LT | "=<" => Condition::EqLt,
             EQ_GT | "=>" => Condition::EqGt,
-            NEQ | "=>" => Condition::NEQ,
+            NEQ => Condition::NEQ,
             &_ => { panic!("invalid Condition;should be one of [>,=,<,>=,=>,<=,=<,!=]") }
         }
     }
