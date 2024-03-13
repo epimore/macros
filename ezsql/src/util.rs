@@ -1,14 +1,14 @@
 use proc_macro::TokenStream;
-use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Debug;
 use proc_macro2::TokenTree;
 use quote::ToTokens;
 use syn::{Data, DeriveInput, Type};
 use constructor::{Get, Set};
+use indexmap::IndexMap;
 
 pub fn parse_item(derive_input: DeriveInput) -> StructInfo {
-    let mut field_infos = HashMap::new();
+    let mut field_infos = IndexMap::new();
     match derive_input.data {
         Data::Struct(ref s) => {
             match s.fields {
@@ -38,7 +38,7 @@ pub struct StructInfo {
     //结构体名称
     struct_name: String,
     //(字段名，字段类型)
-    field_infos: HashMap<String, Type>,
+    field_infos: IndexMap<String, Type>,
 }
 
 impl Debug for StructInfo {
@@ -102,7 +102,7 @@ pub fn parse_attr(attrs: TokenStream) -> State {
 pub struct State {
     table_name: String,
     //结构体字段映射到表字段(struct_field_name,table_field_name)
-    alias_fields: Option<HashMap<String, String>>,
+    alias_fields: Option<IndexMap<String, String>>,
     //alias_fields不受控制，默认None=false
     field_name_to_snake: Option<bool>,
     //定义多个方法
@@ -169,11 +169,11 @@ pub struct Inner {
     //指定操作字段，NONE=ALL,可使用SQL函数以$包裹;eg:$count(*)
     fields: Option<Vec<String>>,
     //条件字段，NONE=不控制
-    condition: Option<HashMap<String, Condition>>,
+    condition: Option<IndexMap<String, Condition>>,
     //用于read分页
     page: Option<bool>,
     //用于read排序
-    order: Option<HashMap<String, Order>>,
+    order: Option<IndexMap<String, Order>>,
     //用于read返回值转换，默认：some(true) 返回struct，其他ROW
     res_type: Option<bool>,
     //用于create时：存在则更新；默认None及false为不新增
@@ -273,7 +273,7 @@ impl Inner {
                 if map.is_empty() { panic!("condition is invalid") }
                 let condition = map.iter()
                     .map(|(table_field_name, condition_symbol)| (table_field_name.to_string(), Condition::match_type(&*condition_symbol)))
-                    .collect::<HashMap<String, Condition>>();
+                    .collect::<IndexMap<String, Condition>>();
                 self.set_condition(Some(condition));
             }
             "PAGE" => {
@@ -284,7 +284,7 @@ impl Inner {
                 let map = literal_split_by_colon(ident_str, literal_str);
                 if map.is_empty() { panic!("order is invalid") }
                 let order = map.iter().map(|(table_field_name, order_arg)| (table_field_name.to_string(), Order::match_type(&*order_arg)))
-                    .collect::<HashMap<String, Order>>();
+                    .collect::<IndexMap<String, Order>>();
                 self.set_order(Some(order));
             }
             "RES_TYPE" => {
@@ -322,8 +322,8 @@ fn literal_split_by_comma(literal: &str) -> Vec<String> {
     vec
 }
 
-fn literal_split_by_colon(ident_str: &str, literal: &str) -> HashMap<String, String> {
-    let mut map: HashMap<String, String> = HashMap::new();
+fn literal_split_by_colon(ident_str: &str, literal: &str) -> IndexMap<String, String> {
+    let mut map: IndexMap<String, String> = IndexMap::new();
     for single_str in literal.split(",").map(|str| str.trim()).collect::<Vec<_>>() {
         match &*ident_str.to_ascii_uppercase() {
             "SQL_TYPE" => {

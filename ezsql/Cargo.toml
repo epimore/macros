@@ -15,3 +15,4 @@ proc-macro2 = "1.0"
 constructor = { path = "../constructor" }
 common = { path = "../../pig/common" }
 mysql = "24.0"
+indexmap = "2.2"

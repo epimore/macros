@@ -676,6 +676,7 @@ version = "0.1.0"
 dependencies = [
  "common",
  "constructor",
+ "indexmap",
  "mysql",
  "proc-macro2",
  "quote",
