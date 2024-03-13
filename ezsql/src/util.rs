@@ -360,7 +360,7 @@ fn literal_split_by_colon(ident_str: &str, literal: &str) -> IndexMap<String, St
                 let tuple_order_str = single_str.split_once(":")
                     .map(|(t, e)| (t.trim(), e.trim()))
                     .expect(&*format!("[{single_str}] is invalid;order should like [table_field_name1:ASC,table_field_name2:DESC]"));
-                match tuple_order_str.1 {
+                match &*tuple_order_str.1.to_ascii_uppercase() {
                     DESC => { map.insert(tuple_order_str.0.to_string(), DESC.to_string()); }
                     ASC => { map.insert(tuple_order_str.0.to_string(), ASC.to_string()); }
                     other => { panic!("[{other}] is invalid;order suffix should be one of [asc,desc]") }
