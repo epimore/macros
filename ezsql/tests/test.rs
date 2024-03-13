@@ -1,6 +1,7 @@
 use constructor::{Get, New, Set};
 use ezsql::crud;
 
+#[allow(dead_code)]
 #[derive(Debug, Default, Get, Set, New)]
 #[crud(table_name = "xxx", alias_fields = "xx:xxx,aa:bb", field_name_to_snake = true,
 funs = [

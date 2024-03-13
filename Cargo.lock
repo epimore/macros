@@ -449,6 +449,7 @@ dependencies = [
  "bytes",
  "chrono",
  "clap",
+ "constructor",
  "dashmap",
  "fern",
  "hex-literal",

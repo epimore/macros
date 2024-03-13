@@ -884,16 +884,29 @@ fn build_create_fields_str(struct_table_field_map: &HashMap<String, String>, fie
 ///返回struct_field_name:table_field_name
 fn build_struct_to_table_field_map(attr_state: &State, struct_info: &StructInfo) -> HashMap<String, String> {
     let mut res_map: HashMap<String, String> = HashMap::new();
-    if let Some(map) = attr_state.get_alias_fields() {
-        if let Some(true) = attr_state.get_field_name_to_snake() {
-            for (struct_field_name, _field_type) in struct_info.get_field_infos() {
-                let table_field_name = map.get(struct_field_name).map(|str| str.clone()).unwrap_or_else(|| to_snake_case(&*struct_field_name));
-                res_map.insert(struct_field_name.clone(), table_field_name);
+    match attr_state.get_alias_fields() {
+        None => {
+            if let Some(true) = attr_state.get_field_name_to_snake() {
+                for (struct_field_name, _field_type) in struct_info.get_field_infos() {
+                    res_map.insert(struct_field_name.clone(), to_snake_case(&*struct_field_name));
+                }
+            } else {
+                for (struct_field_name, _field_type) in struct_info.get_field_infos() {
+                    res_map.insert(struct_field_name.clone(), struct_field_name.clone());
+                }
             }
-        } else {
-            for (struct_field_name, _field_type) in struct_info.get_field_infos() {
-                let table_field_name = map.get(struct_field_name).map(|str| str.clone()).unwrap_or(struct_field_name.clone());
-                res_map.insert(struct_field_name.clone(), table_field_name);
+        }
+        Some(map) => {
+            if let Some(true) = attr_state.get_field_name_to_snake() {
+                for (struct_field_name, _field_type) in struct_info.get_field_infos() {
+                    let table_field_name = map.get(struct_field_name).map(|str| str.clone()).unwrap_or_else(|| to_snake_case(&*struct_field_name));
+                    res_map.insert(struct_field_name.clone(), table_field_name);
+                }
+            } else {
+                for (struct_field_name, _field_type) in struct_info.get_field_infos() {
+                    let table_field_name = map.get(struct_field_name).map(|str| str.clone()).unwrap_or(struct_field_name.clone());
+                    res_map.insert(struct_field_name.clone(), table_field_name);
+                }
             }
         }
     }
