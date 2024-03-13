@@ -438,6 +438,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 
 [[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "aes",
+ "anyhow",
+ "base64 0.13.1",
+ "block-modes",
+ "bytebuffer",
+ "bytes",
+ "chrono",
+ "clap",
+ "dashmap",
+ "fern",
+ "hex-literal",
+ "log",
+ "once_cell",
+ "rand",
+ "thiserror",
+ "tokio",
+ "yaml-rust",
+]
+
+[[package]]
 name = "constructor"
 version = "0.2.0"
 dependencies = [
@@ -650,12 +673,12 @@ dependencies = [
 name = "ezsql"
 version = "0.1.0"
 dependencies = [
+ "common",
  "constructor",
- "pig",
+ "mysql",
  "proc-macro2",
  "quote",
  "syn 2.0.51",
- "tools",
 ]
 
 [[package]]
@@ -1393,31 +1416,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
-name = "pig"
-version = "0.1.0"
-dependencies = [
- "aes",
- "anyhow",
- "base64 0.13.1",
- "block-modes",
- "bytebuffer",
- "bytes",
- "chrono",
- "clap",
- "dashmap",
- "fern",
- "hex-literal",
- "lazy_static",
- "log",
- "mysql",
- "once_cell",
- "rand",
- "thiserror",
- "tokio",
- "yaml-rust",
-]
-
-[[package]]
 name = "pin-project-lite"
 version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2037,10 +2035,6 @@ dependencies = [
  "toml_datetime",
  "winnow",
 ]
-
-[[package]]
-name = "tools"
-version = "0.1.0"
 
 [[package]]
 name = "twox-hash"

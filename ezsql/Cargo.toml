@@ -13,4 +13,5 @@ syn = { version = "2" }
 quote = "1.0"
 proc-macro2 = "1.0"
 constructor = { path = "../constructor" }
-pig = { path = "../../pig",features = ["db-mysql"] }
+common = { path = "../../pig/common" }
+mysql = "24.0"

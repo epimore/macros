@@ -1,31 +1,31 @@
 //like java get & set & new
 //未指定struct字段：全部字段构建get/set/new
 //指定struct字段时：指定字段构建get/set/new(其他字段Default::default())
-
 use constructor::{Get, Set, New};
 
-#[derive(Set, Get, New, Default, Debug)]
+#[derive(Set, Get, New, Default, Debug, PartialEq)]
 pub struct Foo {
     a: i32,
     b: String,
     c: bool,
+    d: Option<u32>,
 }
 
 #[test]
 fn test_foo() {
-    let foo = Foo::new(12i32, String::from("avac"), true);
-    println!("{foo:?}");
-    let x = Foo::default().set_a(112).set_b("bb".to_string());
-    println!("{:?}", x);
-    println!("{:?}", x.get_a());
-    println!("{:?}", x.get_b());
-    println!("{:?}", x.get_c());
+    let mut foo = Foo::new(112i32, String::from("abc"), true, Some(12u32));
+    let rf = Foo { a: 112, b: "abc".to_string(), c: true, d: Some(12u32) };
+    assert_eq!(&foo, &rf);
+    foo.set_a(456);
+    foo.set_b("bb".to_string());
+    assert_eq!(foo.get_a(), &456i32);
+    assert_eq!(foo.get_b(), &"bb".to_string());
 }
 
 
-#[derive(Set, Get, New, Default, Debug)]
-#[set(a, c)]
-#[get(b, d)]
+#[derive(Set, Get, New, Default, Debug, PartialEq)]
+#[set(b, c)]
+#[get(b, c)]
 #[new(b, c)]
 pub struct Bar {
     a: i32,
@@ -36,43 +36,235 @@ pub struct Bar {
 
 #[test]
 fn test_bar() {
-    let bar = Bar::new("aaa".to_string(), true);
-    println!("{bar:?}");
-    let x = Bar::default().set_a(123);
-    println!("{:?}", x);
-    println!("{:?}", x.get_b());
-    println!("{:?}", x.get_d());
+    let mut bar = Bar::new("bbb".to_string(), true);
+    let rb = Bar { a: 0, b: String::from("bbb"), c: true, d: 0.0f32 };
+    assert_eq!(&bar, &rb);
+    bar.set_b("nb");
+    bar.set_c(false);
+    assert_eq!(bar.get_b(), &"nb".to_string());
+    assert_eq!(*bar.get_c(), false);
 }
 
-#[derive(Set, Get, New, Default, Debug)]
+#[derive(Set, Get, New, Default, Debug, PartialEq)]
 pub struct UnFoo(u32, String, bool);
 
 #[test]
 fn test_un_foo() {
-    let un_foo = UnFoo::new(1u32, "sss".to_string(), true);
-    println!("{:?}", un_foo);
-    let x = UnFoo::default().set_0(112u32).set_1("bb".to_string());
-    println!("{:?}", x);
-    println!("{:?}", x.get_0());
-    println!("{:?}", x.get_1());
-    println!("{:?}", x.get_2());
+    let mut un_foo = UnFoo::new(1u32, "sss".to_string(), true);
+    let ruf = UnFoo(1u32, "sss".to_string(), true);
+    assert_eq!(&un_foo, &ruf);
+    un_foo.set_0(10u32);
+    un_foo.set_1("xxx".to_string());
+    un_foo.set_2(false);
+    assert_eq!(un_foo.get_0(), &10u32);
+    assert_eq!(un_foo.get_1(), &"xxx".to_string());
+    assert_eq!(un_foo.get_2(), &false);
 }
 
 
-#[derive(Set, Get, New, Default, Debug)]
+#[derive(Set, Get, New, Default, Debug, PartialEq)]
 #[set(0, 2)]
-#[get(1, 2, 3)]
+#[get(0, 2)]
 #[new(0, 2)]
 pub struct UnBar(u32, String, bool, i32);
 
 #[test]
 fn test_un_bar() {
-    let un_bar = UnBar::new(234u32, true);
-    println!("{un_bar:?}");
-    let x = UnBar::default().set_0(123u32).set_2(true);
-    println!("{:?}", x);
-    println!("{:?}", x.get_1());
-    println!("{:?}", x.get_2());
-    println!("{:?}", x.get_3());
+    let mut un_bar = UnBar::new(234u32, true);
+    let rub = UnBar(234u32, "".to_string(), true, 0);
+    assert_eq!(&un_bar, &rub);
+    un_bar.set_0(111u32);
+    un_bar.set_2(false);
+    assert_eq!(un_bar.get_0(), &111u32);
+    assert_eq!(un_bar.get_2(), &false);
 }
+----------------------
+
+use constructor::{Get, New, Set};
+use ezsql::crud;
+
+#[derive(Debug, Default, Get, Set, New)]
+#[crud(table_name = "xxx", alias_fields = "xx:xxx,aa:bb", field_name_to_snake = true,
+funs = [
+{fn_name = "create_user1", sql_type = "create:single", fields = "name, age"},
+{fn_name = "create_user2", sql_type = "create:batch", fields = "name, age", exist_update = "true"},
+{fn_name = "delete_user1", sql_type = "delete", condition = "name:=, age:<=,id:="}
+{fn_name = "delete_user2", sql_type = "delete"},
+{fn_name = "update_user1", sql_type = "update", fields = "name, age", condition = "name:>, age:=<,id:="},
+{fn_name = "update_user2", sql_type = "update", fields = "name, age", condition = "name:>, age:=<,id:="},
+{fn_name = "read_user1", sql_type = "read:single", pre_where_sql = "select count(1)"},
+{fn_name = "read_user2", sql_type = "read:single", fields = "name, age", condition = "name:=, age:>=,id:=", order = "name:DESC,age:ASC", res_type = "false"},
+{fn_name = "read_user3", sql_type = "read:batch", fields = "name, age", condition = "name:=, age:>=,id:=", page = "true", order = "name:DESC,age:ASC", res_type = "true"},
+{fn_name = "read_user4", sql_type = "read:batch", fields = "name, age", condition = "name:=, age:>=,id:=", order = "name:DESC,age:ASC", res_type = "true"},
+{fn_name = "read_user5", sql_type = "read:single", fields = "name, age", condition = "name:=, age:>=,id:=", order = "name:DESC,age:ASC", res_type = "true"},
+{fn_name = "read_user6", sql_type = "read:single", condition = "name:=, age:>=,id:=", pre_where_sql = "select count(1)"}
+])]
+struct User {
+    id: i32,
+    name: String,
+    age: i32,
+    sex: bool,
+}
+
+///The macro crud will generate the following code:
+/// ************
+/// impl User
+/// {
+///     pub fn create_user1(&self, conn: &mut mysql::PooledConn)
+///     {
+///         use mysql::prelude::Queryable;
+///         use mysql::params;
+///         use common::err::TransError;
+///         use common::log::error;
+///         let _ =
+///             conn.exec_drop("INSERT INTO xxx (name,age) VALUES (:name,:age)",
+///                            params! {
+///             "name" => & self.get_name(), "age" => & self.get_age()
+///         }).hand_err(|msg| error!("数据库操作失败: {msg}"));
+///     }
+///     pub fn create_user2(vec: Vec<Self>, conn: &mut mysql::PooledConn)
+///     {
+///         use mysql::prelude::Queryable;
+///         use mysql::params;
+///         use common::err::TransError;
+///         use common::log::error;
+///         let _ =
+///             conn.exec_batch("INSERT INTO xxx (name,age) VALUES (:name,:age) ON DUPLICATE KEY UPDATE name=VALUES(name),age=VALUES(age)",
+///                             vec.iter().map(|p| params! {
+///             "name" => & p.get_name(), "age" => & p.get_age()
+///         })).hand_err(|msg| error!("数据库操作失败: {msg}"));
+///     }
+///     pub fn delete_user1(conn: &mut mysql::PooledConn, id: i32, age: i32, name: String)
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use mysql::params;
+///         use common::log::error;
+///         let _ =
+///             conn.exec_drop("DELETE FROM xxx WHERE id=:id AND age<=:age AND name=:name",
+///                            params! {
+///             "id" => id, "age" => age, "name" => name
+///         }).hand_err(|msg| error!("数据库操作失败: {msg}"));
+///     }
+///     pub fn delete_user2(conn: &mut mysql::PooledConn)
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use common::log::error;
+///         let _ =
+///             conn.query_drop("DELETE FROM xxx").hand_err(|msg| error!("数据库操作失败: {msg}"));
+///     }
+///     pub fn update_user1(&self, conn: &mut mysql::PooledConn, c_id: i32, c_age: i32, c_name: String)
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use mysql::params;
+///         use common::log::error;
+///         let _ =
+///             conn.exec_drop("UPDATE xxx SET name=:name,age=:age WHERE id=:c_id AND age<=:c_age AND name>:c_name",
+///                            params! {
+///             "name" => & self.get_name(), "age" => & self.get_age(), c_id, c_age, c_name
+///         }).hand_err(|msg| error!("数据库操作失败: {msg}"));
+///     }
+///     pub fn update_user2(&self, conn: &mut mysql::PooledConn, c_id: i32, c_name: String, c_age: i32)
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use mysql::params;
+///         use common::log::error;
+///         let _ =
+///             conn.exec_drop("UPDATE xxx SET name=:name,age=:age WHERE id=:c_id AND name>:c_name AND age<=:c_age",
+///                            params! {
+///             "name" => & self.get_name(), "age" => & self.get_age(), c_id, c_name, c_age
+///         }).hand_err(|msg| error!("数据库操作失败: {msg}"));
+///     }
+///     pub fn read_user1<T: mysql::prelude::FromRow>(&self, conn: &mut mysql::PooledConn) -> common::err::GlobalResult<Option<T>>
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use common::log::error;
+///         let res =
+///             conn.query_first("select count(1) FROM xxx").hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+///         Ok(res)
+///     }
+///     pub fn read_user2<T: mysql::prelude::FromRow>(&self, conn: &mut mysql::PooledConn, name: String, age: i32, id: i32)
+///                                                   -> common::err::GlobalResult<Option<T>>
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use common::log::error;
+///         use mysql::params;
+///         let res =
+///             conn.exec_first("SELECT name,age FROM xxx WHERE name=:name AND age>=:age AND id=:id ORDER BY age ASC,name DESC",
+///                             params! {
+///             name, age, id
+///         }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+///         Ok(res)
+///     }
+///     pub fn read_user3(&self, conn: &mut mysql::PooledConn, _limit_start: u32, _limit_end: u32, name: String, age: i32, id: i32)
+///                       -> common::err::GlobalResult<Vec<User>>
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use common::log::error;
+///         use mysql::params;
+///         let res =
+///             conn.exec("SELECT name,age FROM xxx WHERE name=:name AND age>=:age AND id=:id ORDER BY name DESC,age ASC LIMIT :_limit_start, :_limit_end",
+///                       params! {
+///             name, age, id, _limit_start, _limit_end
+///         }).hand_err(|msg| error!("数据库操作失败: {msg}"))?
+///                 .into_iter().map(|(name, age)| User
+///             { name, age, ..Default::default() }).collect();
+///         Ok(res)
+///     }
+///     pub fn read_user4(&self, conn: &mut mysql::PooledConn, age: i32, name: String, id: i32) -> common::err::GlobalResult<Vec<User>>
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use common::log::error;
+///         use mysql::params;
+///         let res =
+///             conn.exec("SELECT name,age FROM xxx WHERE age>=:age AND name=:name AND id=:id ORDER BY name DESC,age ASC",
+///                       params! {
+///             age, name, id
+///         }).hand_err(|msg| error!("数据库操作失败: {msg}"))?
+///                 .into_iter().map(|(name, age)| User { name, age, ..Default::default() })
+///                 .collect();
+///         Ok(res)
+///     }
+///     pub fn read_user5(&self, conn: &mut mysql::PooledConn, name: String, age: i32, id: i32) -> common::err::GlobalResult<Option<User>>
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use common::log::error;
+///         use mysql::params;
+///         let res =
+///             conn.exec_first("SELECT name,age FROM xxx WHERE name=:name AND age>=:age AND id=:id ORDER BY age ASC,name DESC",
+///                             params! {
+///             name, age, id
+///         }).hand_err(|msg| error!("数据库操作失败: {msg}"))?
+///                 .map(|(name, age)| User { name, age, ..Default::default() });
+///         Ok(res)
+///     }
+///     pub fn read_user6<T: mysql::prelude::FromRow>(&self, conn: &mut mysql::PooledConn, age: i32, name: String, id: i32)
+///                                                   -> common::err::GlobalResult<Option<T>>
+///     {
+///         use mysql::prelude::Queryable;
+///         use common::err::TransError;
+///         use common::log::error;
+///         use mysql::params;
+///         let res =
+///             conn.exec_first("select count(1) FROM xxx WHERE age>=:age AND name=:name AND id=:id",
+///                             params! {
+///             age, name, id
+///         }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+///         Ok(res)
+///     }
+/// }
+/// ************
+
+
+
+
+
 
