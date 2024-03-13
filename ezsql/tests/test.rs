@@ -3,7 +3,7 @@ use ezsql::crud;
 
 #[allow(dead_code)]
 #[derive(Debug, Default, Get, Set, New)]
-#[crud(table_name = "xxx", alias_fields = "xx:xxx,aa:bb", field_name_to_snake = true,
+#[crud(table_name = "xxx", alias_fields = "xx:xxx,aa:bb", field_name_to_snake = "true",
 funs = [
 {fn_name = "create_user1", sql_type = "create:single", fields = "name, age"},
 {fn_name = "create_user2", sql_type = "create:batch", fields = "name, age", exist_update = "true"},

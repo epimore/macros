@@ -8,7 +8,7 @@ use syn::DeriveInput;
 use util::*;
 use indexmap::IndexMap;
 
-
+///结构体字段暂只支持snake_case命名
 #[proc_macro_attribute]
 pub fn crud(attr: TokenStream, item: TokenStream) -> TokenStream {
     let constructor = build_constructor(attr, item);
