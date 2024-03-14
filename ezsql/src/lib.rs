@@ -9,10 +9,10 @@ use util::*;
 use indexmap::IndexMap;
 
 ///结构体字段暂只支持snake_case命名
+/// 结构体字段、库表字段、条件参数字段分开
 #[proc_macro_attribute]
 pub fn crud(attr: TokenStream, item: TokenStream) -> TokenStream {
     let constructor = build_constructor(attr, item);
-    println!("{}", &constructor.to_string());
     constructor.into()
 }
 ///方法参数顺序：self,conn,condition,limit
