@@ -113,7 +113,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                 //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
                                 None => {
                                     quote!(
-                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Option<T>>{
+                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Option<T>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -129,7 +129,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         Some(true) => {
                                             if vec.len() == field_infos.len() {
                                                 quote!(
-                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Option<#struct_name>>{
+                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Option<#struct_name>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -140,7 +140,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                     })
                                             } else {
                                                 quote!(
-                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Option<#struct_name>>{
+                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Option<#struct_name>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -153,7 +153,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         }
                                         _ => {
                                             quote!(
-                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Option<T>>{
+                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Option<T>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -229,7 +229,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                 //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
                                 None => {
                                     quote!(
-                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*,_limit_start:u32, _limit_end:u32)->common::err::GlobalResult<Vec<T>>{
+                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*,_limit_start:u32, _limit_end:u32)->common::err::GlobalResult<Vec<T>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -245,7 +245,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         Some(true) => {
                                             if vec.len() == field_infos.len() {
                                                 quote!(
-                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*,_limit_start:u32, _limit_end:u32)->common::err::GlobalResult<Vec<#struct_name>>{
+                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*,_limit_start:u32, _limit_end:u32)->common::err::GlobalResult<Vec<#struct_name>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -256,7 +256,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                     })
                                             } else {
                                                 quote!(
-                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*,_limit_start:u32, _limit_end:u32)->common::err::GlobalResult<Vec<#struct_name>>{
+                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*,_limit_start:u32, _limit_end:u32)->common::err::GlobalResult<Vec<#struct_name>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -270,7 +270,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         }
                                         _ => {
                                             quote!(
-                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*,_limit_start:u32, _limit_end:u32)->common::err::GlobalResult<Vec<T>>{
+                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*,_limit_start:u32, _limit_end:u32)->common::err::GlobalResult<Vec<T>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -349,7 +349,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                 //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
                                 None => {
                                     quote!(
-                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Option<T>>{
+                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Option<T>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -365,7 +365,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         Some(true) => {
                                             if vec.len() == field_infos.len() {
                                                 quote!(
-                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Option<#struct_name>>{
+                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Option<#struct_name>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -376,7 +376,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                     })
                                             } else {
                                                 quote!(
-                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Option<#struct_name>>{
+                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Option<#struct_name>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -389,7 +389,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         }
                                         _ => {
                                             quote!(
-                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Option<T>>{
+                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Option<T>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -465,7 +465,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                 //指定了sql前缀,返回原始数据，需自己处理结果转换,res_type无效
                                 None => {
                                     quote!(
-                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Vec<T>>{
+                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Vec<T>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -481,7 +481,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         Some(true) => {
                                             if vec.len() == field_infos.len() {
                                                 quote!(
-                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Vec<#struct_name>>{
+                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Vec<#struct_name>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -492,7 +492,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                     })
                                             } else {
                                                 quote!(
-                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Vec<#struct_name>>{
+                                    pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Vec<#struct_name>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -506,7 +506,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         }
                                         _ => {
                                             quote!(
-                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:#param_type),*)->common::err::GlobalResult<Vec<T>>{
+                                    pub fn #fn_name_ident<T: mysql::prelude::FromRow>(conn: &mut mysql::PooledConn,#(#param_name:&#param_type),*)->common::err::GlobalResult<Vec<T>>{
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
@@ -660,7 +660,7 @@ fn build_update_constructor(inner: &Inner, field_infos: &IndexMap<String, Type>,
                 param_types.push(field_infos.get(&*field_name).unwrap().clone());
             }
             quote!(
-                pub fn #fn_name_ident(&self,conn: &mut mysql::PooledConn,#(#params:#param_types),*){
+                pub fn #fn_name_ident(&self,conn: &mut mysql::PooledConn,#(#params:&#param_types),*){
                     use mysql::prelude::Queryable;
                     use common::err::TransError;
                     use mysql::params;
@@ -709,7 +709,7 @@ fn buidl_delete_constructor(inner: &Inner, field_infos: &IndexMap<String, Type>,
                 param_types.push(field_infos.get(&*field_name).unwrap().clone());
             }
             quote!(
-                pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#params:#param_types),*){
+                pub fn #fn_name_ident(conn: &mut mysql::PooledConn,#(#params:&#param_types),*){
                     use mysql::prelude::Queryable;
                     use common::err::TransError;
                     use mysql::params;
