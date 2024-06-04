@@ -66,7 +66,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        let res = conn.query_first(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                         Ok(res)
                                     })
                                 }
@@ -79,7 +79,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
+                                        let res = conn.query_first(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
                                             Ok(res)
                                     })
                                             } else {
@@ -88,7 +88,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
+                                        let res = conn.query_first(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
                                             Ok(res)
                                     })
                                             }
@@ -99,7 +99,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        let res = conn.query_first(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
                                         }
@@ -120,7 +120,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::params;
                                         let res = conn.exec_first(#sql,params!{
                                             #(#param_name),*
-                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        }).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                     Ok(res)
                                     })
                                 }
@@ -135,7 +135,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use common::log::error;
                                         use mysql::params;
                                        let res = conn.exec_first(#sql,params!{
-                                            #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
+                                            #(#param_name),*}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
                                             Ok(res)
                                     })
                                             } else {
@@ -146,7 +146,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use common::log::error;
                                         use mysql::params;
                                        let res = conn.exec_first(#sql,params!{
-                                            #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
+                                            #(#param_name),*}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
                                             Ok(res)
                                     })
                                             }
@@ -160,7 +160,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::params;
                                         let res = conn.exec_first(#sql,params!{
                                             #(#param_name),*
-                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        }).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
                                         }
@@ -181,7 +181,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                     Ok(res)
                                     })
                                 }
@@ -194,7 +194,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
+                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
                                             Ok(res)
                                     })
                                             } else {
@@ -203,7 +203,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
+                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
                                                 .map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()}).collect();
                                             Ok(res)
                                     })
@@ -215,7 +215,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        let res = conn.exec(#sql,params!{_limit_start,_limit_end}).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
                                         }
@@ -236,7 +236,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::params;
                                         let res = conn.exec(#sql,params!{
                                             #(#param_name),*,_limit_start,_limit_end
-                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        }).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                     Ok(res)
                                     })
                                 }
@@ -251,7 +251,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use common::log::error;
                                         use mysql::params;
                                         let res = conn.exec(#sql,params!{
-                                            #(#param_name),*,_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
+                                            #(#param_name),*,_limit_start,_limit_end}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
                                             Ok(res)
                                     })
                                             } else {
@@ -262,7 +262,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use common::log::error;
                                         use mysql::params;
                                         let res = conn.exec(#sql,params!{
-                                            #(#param_name),*,_limit_start,_limit_end}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
+                                            #(#param_name),*,_limit_start,_limit_end}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
                                                 .map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()}).collect();
                                             Ok(res)
                                     })
@@ -277,7 +277,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::params;
                                         let res =  conn.exec(#sql,params!{
                                             #(#param_name),*,_limit_start,_limit_end
-                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        }).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
                                         }
@@ -302,7 +302,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        let res = conn.query_first(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                         Ok(res)
                                     })
                                 }
@@ -315,7 +315,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
+                                        let res = conn.query_first(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
                                             Ok(res)
                                     })
                                             } else {
@@ -324,7 +324,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
+                                        let res = conn.query_first(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
                                             Ok(res)
                                     })
                                             }
@@ -335,7 +335,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query_first(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        let res = conn.query_first(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
                                         }
@@ -356,7 +356,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::params;
                                         let res = conn.exec_first(#sql,params!{
                                             #(#param_name),*
-                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        }).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                     Ok(res)
                                     })
                                 }
@@ -371,7 +371,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use common::log::error;
                                         use mysql::params;
                                        let res = conn.exec_first(#sql,params!{
-                                            #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
+                                            #(#param_name),*}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*});
                                             Ok(res)
                                     })
                                             } else {
@@ -382,7 +382,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use common::log::error;
                                         use mysql::params;
                                        let res = conn.exec_first(#sql,params!{
-                                            #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
+                                            #(#param_name),*}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()});
                                             Ok(res)
                                     })
                                             }
@@ -396,7 +396,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::params;
                                         let res = conn.exec_first(#sql,params!{
                                             #(#param_name),*
-                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        }).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
                                         }
@@ -417,7 +417,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        let res = conn.query(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                     Ok(res)
                                     })
                                 }
@@ -430,7 +430,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
+                                        let res = conn.query(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
                                             Ok(res)
                                     })
                                             } else {
@@ -439,7 +439,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
+                                        let res = conn.query(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
                                                 .map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()}).collect();
                                             Ok(res)
                                     })
@@ -451,7 +451,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::prelude::Queryable;
                                         use common::err::TransError;
                                         use common::log::error;
-                                        let res = conn.query(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        let res = conn.query(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
                                         }
@@ -472,7 +472,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::params;
                                         let res = conn.exec(#sql,params!{
                                             #(#param_name),*
-                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        }).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                     Ok(res)
                                     })
                                 }
@@ -487,7 +487,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use common::log::error;
                                         use mysql::params;
                                         let res = conn.exec(#sql,params!{
-                                            #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
+                                            #(#param_name),*}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.into_iter().map(|(#(#vec),*)|#struct_name{#(#vec),*}).collect();
                                             Ok(res)
                                     })
                                             } else {
@@ -498,7 +498,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use common::log::error;
                                         use mysql::params;
                                         let res = conn.exec(#sql,params!{
-                                            #(#param_name),*}).hand_err(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
+                                            #(#param_name),*}).hand_log(|msg| error!("数据库操作失败: {msg}"))?.into_iter()
                                                 .map(|(#(#vec),*)|#struct_name{#(#vec),*,..Default::default()}).collect();
                                             Ok(res)
                                     })
@@ -513,7 +513,7 @@ fn build_read_constructor(inner: &Inner, struct_name: Ident, sql_type_ext: &SqlT
                                         use mysql::params;
                                         let res =  conn.exec(#sql,params!{
                                             #(#param_name),*
-                                        }).hand_err(|msg| error!("数据库操作失败: {msg}"))?;
+                                        }).hand_log(|msg| error!("数据库操作失败: {msg}"))?;
                                             Ok(res)
                                     })
                                         }
@@ -640,7 +640,7 @@ fn build_update_constructor(inner: &Inner, field_infos: &IndexMap<String, Type>,
                     let _ = conn.exec_drop(#sql,params!{
                         #(#struct_fields_vec => &self.#struct_field_ident_vec()),*
                     }
-                    ).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                    ).hand_log(|msg| error!("数据库操作失败: {msg}"));
                 })
         }
         Some(map) => {
@@ -668,7 +668,7 @@ fn build_update_constructor(inner: &Inner, field_infos: &IndexMap<String, Type>,
                     let _ = conn.exec_drop(#sql,params!{
                         #(#struct_fields_vec => &self.#struct_field_ident_vec()),*,
                         #(#params),*
-                    }).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                    }).hand_log(|msg| error!("数据库操作失败: {msg}"));
                 }
             )
         }
@@ -687,7 +687,7 @@ fn buidl_delete_constructor(inner: &Inner, field_infos: &IndexMap<String, Type>,
                     use mysql::prelude::Queryable;
                     use common::err::TransError;
                     use common::log::error;
-                    let _ = conn.query_drop(#sql).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                    let _ = conn.query_drop(#sql).hand_log(|msg| error!("数据库操作失败: {msg}"));
                 }
             )
         }
@@ -716,7 +716,7 @@ fn buidl_delete_constructor(inner: &Inner, field_infos: &IndexMap<String, Type>,
                     use common::log::error;
                     let _ = conn.exec_drop(#sql,params!{
                         #(#field_names => #params),*
-                    }).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                    }).hand_log(|msg| error!("数据库操作失败: {msg}"));
                 }
             )
         }
@@ -751,7 +751,7 @@ fn build_create_constructor(inner: &Inner, sql_type_ext: &SqlTypeExt, table_name
                     use common::log::error;
                     let _ = conn.exec_drop(#sql,params!{
                         #(#struct_field_name_vec => &self.#field_value_ident()),*
-                    }).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                    }).hand_log(|msg| error!("数据库操作失败: {msg}"));
                 }
             )
         }
@@ -764,7 +764,7 @@ fn build_create_constructor(inner: &Inner, sql_type_ext: &SqlTypeExt, table_name
                     use common::log::error;
                     let _ = conn.exec_batch(#sql,vec.iter().map(|p|params!{
                        #(#struct_field_name_vec => &p.#field_value_ident()),*
-                    })).hand_err(|msg| error!("数据库操作失败: {msg}"));
+                    })).hand_log(|msg| error!("数据库操作失败: {msg}"));
                 }
             )
         }
