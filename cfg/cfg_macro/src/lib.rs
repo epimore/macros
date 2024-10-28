@@ -18,7 +18,7 @@ pub fn conf(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let (i, t, w) = ast.generics.split_for_impl();
     let fun = quote! {
         #ast
-        impl #i #name #t #w {
+        impl #i Conf for #name #t #w {
             #token_stream
         }
     };
@@ -35,7 +35,7 @@ fn build_fn_constructor(attr: Attr) -> proc_macro2::TokenStream {
     match attr.path {
         None => {
             fn_body_path = quote! {
-                let yaml_content = cfg_lib::cache::get_config();
+                let yaml_content = cfg::cache::get_config();
                 let yaml_value: serde_yaml::Value = serde_yaml::from_str(&yaml_content)
                     .expect("Failed to parse YAML content");
             };
@@ -76,7 +76,7 @@ fn build_fn_constructor(attr: Attr) -> proc_macro2::TokenStream {
     }
 
     quote! {
-        pub fn init_by_conf() -> Self {
+        fn conf() -> Self {
             #fn_body_path
             #fn_body_prefix
             #fn_body_data_type

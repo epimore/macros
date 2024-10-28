@@ -12,7 +12,8 @@ proc-macro = true
 syn = { version = "2" }
 quote = "1.0"
 proc-macro2 = "1.0"
+serde = "1.0"
 constructor = { path = "../constructor" }
-common = { path = "../../pig/common" }
+common = { path = "../../common" }
 mysql = "24.0"
 indexmap = "2.2"

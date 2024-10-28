@@ -48,7 +48,7 @@ mod tests {
     #[test]
     fn test_load_file_yaml_field_to_struct() {
         // 使用宏只映射 'features' 字段到 Features 结构体
-        let features: Features = load_file_yaml_field_to_struct!("/home/ubuntu20/code/rs/mv/github/epimore/pig/cfg/cfg1.yaml", "features", Features);
+        let features: Features = load_file_yaml_field_to_struct!("/home/ubuntu20/code/rs/mv/github/epimore/pig/macros/cfg/tests/cfg1.yaml", "features", Features);
         // 打印 features 结果
         println!("Parsed features: {:?}", features);
     }
@@ -57,7 +57,7 @@ mod tests {
         use std::fs::File;
         use std::io::Read;
         // 读取 YAML 文件
-        let mut file = File::open("/home/ubuntu20/code/rs/mv/github/epimore/pig/cfg/cfg1.yaml").expect("File not found");
+        let mut file = File::open("/home/ubuntu20/code/rs/mv/github/epimore/pig/macros/cfg/tests/cfg1.yaml").expect("File not found");
         let mut contents = String::new();
         file.read_to_string(&mut contents).expect("Failed to read file");
         let features: Features = load_str_yaml_field_to_struct!(&contents, "features", Features);
