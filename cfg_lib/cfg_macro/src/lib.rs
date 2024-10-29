@@ -22,8 +22,6 @@ pub fn conf(attrs: TokenStream, item: TokenStream) -> TokenStream {
             #token_stream
         }
     };
-
-    println!("{}", &fun.to_string());
     fun.into()
 }
 
@@ -35,7 +33,7 @@ fn build_fn_constructor(attr: Attr) -> proc_macro2::TokenStream {
     match attr.path {
         None => {
             fn_body_path = quote! {
-                let yaml_content = cfg::cache::get_config();
+                let yaml_content = cfg_lib::cache::get_config();
                 let yaml_value: serde_yaml::Value = serde_yaml::from_str(&yaml_content)
                     .expect("Failed to parse YAML content");
             };
