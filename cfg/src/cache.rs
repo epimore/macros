@@ -10,11 +10,11 @@ pub fn get_config() -> Arc<String> {
 }
 
 fn make() -> String {
-    // let path = get_conf_path();
+    let path = get_conf_path();
     // let path = "/home/ubuntu20/code/rs/mv/github/epimore/gmv/stream/config.yml".to_string();
     // let path = "/home/ubuntu20/code/rs/mv/github/epimore/gmv/session/config.yml".to_string();
     // let path = "/home/ubuntu20/code/rs/mv/github/epimore/macros/cfg/cfg_macro/cfg1.yaml".to_string();
-    let path = "/home/ubuntu20/code/rs/mv/github/epimore/pig/common/config.yml".to_string();
+    // let path = "/home/ubuntu20/code/rs/mv/github/epimore/pig/common/config.yml".to_string();
     let mut file = File::open(path).expect("not found config file to open");
     let mut conf = String::new();
     file.read_to_string(&mut conf).expect("read file content to string failed");
