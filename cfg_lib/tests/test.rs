@@ -11,7 +11,7 @@ struct Cfg1 {
     features: Features,
 }
 #[derive(Debug, Deserialize)]
-#[conf(path="/home/ubuntu20/code/rs/mv/github/epimore/pig/macros/cfg/tests/cfg1.yaml")]
+#[conf(path="/home/ubuntu20/code/rs/mv/github/epimore/pig/macros/cfg_lib/tests/cfg1.yaml")]
 struct Cfg2 {
     name: String,
     version: String,
@@ -19,7 +19,7 @@ struct Cfg2 {
 }
 
 #[derive(Debug, Deserialize)]
-#[conf(path="/home/ubuntu20/code/rs/mv/github/epimore/pig/macros/cfg/tests/cfg1.yaml",prefix="features")]
+#[conf(path="/home/ubuntu20/code/rs/mv/github/epimore/pig/macros/cfg_lib/tests/cfg1.yaml",prefix="features")]
 struct Features {
     logging: bool,
     metrics: bool,
