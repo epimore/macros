@@ -22,6 +22,7 @@ pub fn conf(attrs: TokenStream, item: TokenStream) -> TokenStream {
             #token_stream
         }
     };
+    println!("{}",&fun.to_string());
     fun.into()
 }
 
@@ -51,12 +52,20 @@ fn build_fn_constructor(attr: Attr) -> proc_macro2::TokenStream {
     match attr.prefix {
         None => {
             fn_body_prefix = quote! {
-                let target_value = yaml_value;
+                let target_value = &yaml_value;
             };
         }
         Some(prefix) => {
             fn_body_prefix = quote! {
-                let target_value = &yaml_value[#prefix];
+                let mut target_value = &yaml_value;
+                for key in #prefix.split('.') {
+                    if let serde_yaml::Value::Mapping(map) = target_value {
+                        target_value = map.get(&serde_yaml::Value::String(key.to_string()))
+                            .expect("Specified prefix not found in YAML");
+                    } else {
+                        panic!("Invalid YAML structure for the specified prefix");
+                    }
+                }
             };
         }
     }
