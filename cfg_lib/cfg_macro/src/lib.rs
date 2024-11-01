@@ -4,11 +4,20 @@ use proc_macro2::TokenTree;
 use quote::quote;
 use syn::{DeriveInput};
 use proc_macro::TokenStream;
+/// ```example
+/// #[conf(path="可选",prefix="可选",data_type="可选")]
+/// struct T{ xxx}
+/// impl struct{
+///   fn test()->Self{
+///     T::conf()
+///   }
+/// }
+/// ```
 /// attributes(path, prefix, data_type)
 /// 配合serde 从指定文件中format数据到struct；
-/// path:指定文件 默认读取配置文件
-/// prefix: 指定字段数据 默认无
-/// data_type: 文件类型 默认yaml,暂仅支持yaml
+/// path:指定文件 默认读取配置文件;
+/// prefix: 指定字段数据 默认无;
+/// data_type: 文件类型 默认yaml,暂仅支持yaml;
 #[proc_macro_attribute]
 pub fn conf(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(item).expect("syn parse item failed");
@@ -18,11 +27,11 @@ pub fn conf(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let (i, t, w) = ast.generics.split_for_impl();
     let fun = quote! {
         #ast
-        impl #i Conf for #name #t #w {
+        impl #i #name #t #w {
             #token_stream
         }
     };
-    println!("{}",&fun.to_string());
+    // println!("{}",&fun.to_string());
     fun.into()
 }
 

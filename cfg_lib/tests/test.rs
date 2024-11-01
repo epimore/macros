@@ -1,6 +1,5 @@
 use serde::Deserialize;
 use cfg_macro::conf;
-use cfg_lib::Conf;
 
 
 #[derive(Debug, Deserialize)]
