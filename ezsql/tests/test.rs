@@ -2,27 +2,27 @@ use mysql::serde::{Deserialize, Serialize};
 use constructor::{Get, New, Set};
 use ezsql::crud;
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Get, Set, New)]
-#[new(device_id, domain_id, domain)]
-#[crud(table_name = "GMV_OAUTH",
-funs = [
-{fn_name = "add_gmv_oauth", sql_type = "create:single", exist_update = "true"},
-{fn_name = "add_gmv_oauth_by_batch", sql_type = "create:batch"},
-{fn_name = "delete_gmv_oauth", sql_type = "delete", condition = "device_id:=,domain_id:="},
-{fn_name = "update_gmv_oauth_pwd", sql_type = "update", fields = "pwd", condition = "device_id:=,domain_id:="},
-{fn_name = "read_gmv_oauth_single_all", sql_type = "read:single", condition = "device_id:=,domain_id:="},
-{fn_name = "read_gmv_oauth_single_pwd", sql_type = "read:single", fields = "pwd", condition = "device_id:=,domain_id:=", res_type = "false"},
-{fn_name = "read_gmv_oauth_batch_status", sql_type = "read:batch", condition = "status:=", order = "device_id:desc" page = "true", res_type = "true"},
-])]
-struct GmvOauth {
-    device_id: String,
-    domain_id: String,
-    domain: String,
-    pwd: Option<String>,
-    pwd_check: u8,
-    alias: Option<String>,
-    status: u8,
-}
+// #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Get, Set, New)]
+// #[new(device_id, domain_id, domain)]
+// #[crud(table_name = "GMV_OAUTH",
+// funs = [
+// {fn_name = "add_gmv_oauth", sql_type = "create:single", exist_update = "true"},
+// {fn_name = "add_gmv_oauth_by_batch", sql_type = "create:batch"},
+// {fn_name = "delete_gmv_oauth", sql_type = "delete", condition = "device_id:=,domain_id:="},
+// {fn_name = "update_gmv_oauth_pwd", sql_type = "update", fields = "pwd", condition = "device_id:=,domain_id:="},
+// {fn_name = "read_gmv_oauth_single_all", sql_type = "read:single", condition = "device_id:=,domain_id:="},
+// {fn_name = "read_gmv_oauth_single_pwd", sql_type = "read:single", fields = "pwd", condition = "device_id:=,domain_id:=", res_type = "false"},
+// {fn_name = "read_gmv_oauth_batch_status", sql_type = "read:batch", condition = "status:=", order = "device_id:desc" page = "true", res_type = "true"},
+// ])]
+// struct GmvOauth {
+//     device_id: String,
+//     domain_id: String,
+//     domain: String,
+//     pwd: Option<String>,
+//     pwd_check: u8,
+//     alias: Option<String>,
+//     status: u8,
+// }
 
 ///The macro crud will generate the following code:
 /// ************
@@ -126,6 +126,36 @@ struct GmvOauth {
 /// }
 /// ************
 
+
+
+
+#[derive(Debug, Clone, Default, Get)]
+#[crud(table_name = "GMV_DEVICE_CHANNEL",
+funs = [
+{fn_name = "insert_batch_gmv_device_channel", sql_type = "create:batch", exist_update = "true"},
+])]
+pub struct GmvDeviceChannel {
+    device_id: String,
+    channel_id: String,
+    name: Option<String>,
+    manufacturer: Option<String>,
+    model: Option<String>,
+    owner: Option<String>,
+    status: String,
+    civil_code: Option<String>,
+    address: Option<String>,
+    parental: Option<u8>,
+    block: Option<String>,
+    parent_id: Option<String>,
+    ip_address: Option<String>,
+    port: Option<u16>,
+    password: Option<String>,
+    longitude: Option<f32>,
+    latitude: Option<f32>,
+    ptz_type: Option<u8>,
+    supply_light_type: Option<u8>,
+    alias_name: Option<String>,
+}
 
 ///配合https://github.com/epimore/pig使用
 #[test]
