@@ -1,37 +1,51 @@
 use std::fs::File;
 use std::io::Read;
 use std::sync::Arc;
-use clap::{Arg, Command};
-use once_cell::sync::Lazy;
-static CONF: Lazy<Arc<String>> = Lazy::new(|| Arc::new(make()));
+
+use clap::{Arg, ArgMatches, Command};
+use once_cell::sync::OnceCell;
+
+static CONF: OnceCell<Arc<String>> = OnceCell::new();
 
 pub fn get_config() -> Arc<String> {
-    CONF.clone()
+    CONF.get().expect("service configuration has not yet been initialized").clone()
 }
 
-fn make() -> String {
-    let path = get_conf_path();
-    // let path = "/home/ubuntu20/code/rs/mv/github/epimore/gmv/stream/config.yml".to_string();
-    // let path = "/home/ubuntu20/code/rs/mv/github/epimore/gmv/session/config.yml".to_string();
-    // let path = "/home/ubuntu20/code/rs/mv/github/epimore/macros/cfg/cfg_macro/cfg1.yaml".to_string();
-    // let path = "/home/ubuntu20/code/rs/mv/github/epimore/pig/common/config.yml".to_string();
+pub fn init_cfg(path: String){
     let mut file = File::open(path).expect("not found config file to open");
     let mut conf = String::new();
     file.read_to_string(&mut conf).expect("read file content to string failed");
-    conf
+    CONF.set(Arc::new(conf)).expect("form config of service has been initialized");
 }
 
-fn get_conf_path() -> String {
-    let matches = Command::new("MyApp")
+pub fn get_arg_match() -> ArgMatches {
+    Command::new("MyApp")
         .version("1.0")
         .author("Kz. <kz986542@gmail.com>")
         .about("get the path about config file")
-        .arg(Arg::new("config")
-            .short('c')
-            .long("config")
-            .help("Path to configuration file")
-            .default_value("./config.yml")
+        .subcommand(
+            Command::new("start")
+                .about("Start the service")
+                .arg(Arg::new("config")
+                    .short('c')
+                    .long("config")
+                    .help("Path to configuration file")
+                    .default_value("./config.yml")
+                )
         )
-        .get_matches();
-    matches.try_get_one::<String>("config").expect("get config failed").expect("not found config").to_string()
+        .subcommand(
+            Command::new("stop")
+                .about("Stop the service")
+        )
+        .subcommand(
+            Command::new("restart")
+                .about("Restart the service")
+                .arg(Arg::new("config")
+                    .short('c')
+                    .long("config")
+                    .help("Path to configuration file")
+                    .default_value("./config.yml")
+                )
+        )
+        .get_matches()
 }
