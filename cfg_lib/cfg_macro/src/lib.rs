@@ -1,3 +1,4 @@
+
 extern crate proc_macro;
 
 use proc_macro2::TokenTree;
@@ -35,7 +36,7 @@ pub fn conf(attrs: TokenStream, item: TokenStream) -> TokenStream {
     fun.into()
 }
 
-fn build_fn_constructor(attr: Attr) -> proc_macro2::TokenStream {
+fn build_fn_constructor(attr: ConAttr) -> proc_macro2::TokenStream {
     let fn_body_path;
     let fn_body_prefix;
     let fn_body_data_type;
@@ -43,7 +44,7 @@ fn build_fn_constructor(attr: Attr) -> proc_macro2::TokenStream {
     match attr.path {
         None => {
             fn_body_path = quote! {
-                let yaml_content = cfg_lib::cache::get_config();
+                let yaml_content = cfg_lib::conf::get_config();
                 let yaml_value: serde_yaml::Value = serde_yaml::from_str(&yaml_content)
                     .expect("Failed to parse YAML content");
             };
@@ -100,9 +101,9 @@ fn build_fn_constructor(attr: Attr) -> proc_macro2::TokenStream {
     }
 }
 
-fn parse_attr(attrs: TokenStream) -> Attr {
+fn parse_attr(attrs: TokenStream) -> ConAttr {
     let args = proc_macro2::TokenStream::from(attrs);
-    let mut attr = Attr::default();
+    let mut attr = ConAttr::default();
     if args.is_empty() {
         return attr;
     }
@@ -137,7 +138,7 @@ fn parse_attr(attrs: TokenStream) -> Attr {
 }
 
 #[derive(Default)]
-struct Attr {
+struct ConAttr {
     path: Option<String>,
     prefix: Option<String>,
     data_type: Option<String>,
